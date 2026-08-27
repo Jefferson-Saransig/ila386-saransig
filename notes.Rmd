@@ -1,6 +1,6 @@
 ---
-title: "NOTES"
-author: "jEFFERSON sARANSIG"
+title: "notes"
+author: "jefferson saransig"
 date: "2026-08-27"
 output: html_document
 ---
@@ -41,3 +41,4 @@ Enter names of functions here and info what they do, theur arguments, etc.
 
 ##Additional notes
 notes to myself
+note 1
