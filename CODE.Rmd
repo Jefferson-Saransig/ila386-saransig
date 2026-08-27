@@ -1,0 +1,31 @@
+---
+title: "CLASSCODE"
+author: "JEFFERSON SARANSIG"
+date: "2026-08-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+## Winter CH 1
+code from ch 1 of winter textbook
+```{r}
+numbers <- c(18, 200, 92, 14)
+sum(numbers)
+mean(numbers)
+sd(numbers) %>% round(digits = 2) #the "digits = " se usa solo para recordarnos, en realidad se puede hacer solo round(2)
+names <- c("a", "b", "c")
+names
+
+```
+
+
+```{r}
+2*2
+2*3
+3*4
+```
