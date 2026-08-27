@@ -42,3 +42,4 @@ Enter names of functions here and info what they do, theur arguments, etc.
 ##Additional notes
 notes to myself
 note 1
+note 2
