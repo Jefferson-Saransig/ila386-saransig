@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#install.packages("tidyverse")
+#install.packages("tidyverse") deberia estar aqui??
 library(tidyverse)
 ```
 
@@ -29,5 +29,59 @@ names
 2*3
 3*4
 mynums <- 10:1
+```
+
+
+```{r}
+mynums[1]
+```
+
+```{r}
+mynums>4
+```
+```{r}
+list.files()
+head(nettle)
+nettle <- read.csv('nettle_1999_climate.csv')
+head(nettle)
+tail(nettle)
+```
+```{r}
+x <- readLines('qvi_2026_07_22_llaktamanta_2_gual', n = 2)
+```
+```{r}
+list.files()
+read_tsv("qvi_2026_07_22_llaktamanta_2_gual.tsv")
+```
+```{r}
+hist(nettle$Langs)
+```
+```{r}
+hist(nettle$Langs, col = 'salmon')
+```
+```{r}
+hist(nettle$Langs, col = 'steelblue')
+```
+```{r}
+x_values <- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
+mean_x <- mean(x_values)
+mean_x #para sacar el valor de la media
+```
+```{r}
+x <- c(2, 3, 4, '4')
+x <- as.numeric(x)
+mean(x)
+
+```
+
+```{r}
+head(nettle)
+nettle[2,5]
+nettle[1:4, 1:2]
+nettle[nettle$Country == 'Bangladesh', 'Langs']
+nettle[1:4, ]$Langs[2]
+nettle[1:4, c('Country', 'Langs')]
+head(nettle[,])
+
 ```
 
