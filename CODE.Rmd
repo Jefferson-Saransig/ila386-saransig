@@ -8,7 +8,10 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 #install.packages("tidyverse") deberia estar aqui??
+install.packages("janitor")
 library(tidyverse)
+library(gridExtra)
+#library("janitor") REVISAR ESTO
 ```
 
 ## Winter CH 1
@@ -17,7 +20,7 @@ code from ch 1 of winter textbook
 numbers <- c(18, 200, 92, 14)
 sum(numbers)
 mean(numbers)
-sd(numbers) %>% round(digits = 2) #the "digits = " se usa solo para recordarnos, en realidad se puede hacer solo round(2)
+sd(numbers) %>% round(digits = 2) #the "digits = " se usa solo para recordarnos, en realidad se puede hacer solo round(2). "%>%" help us string operations
 names <- c("a", "b", "c")
 names
 
@@ -83,5 +86,88 @@ nettle[1:4, ]$Langs[2]
 nettle[1:4, c('Country', 'Langs')]
 head(nettle[,])
 
+```
+```{r}
+nettle <- read_csv('nettle_1999_climate.csv')
+```
+```{r}
+# Load data:
+nettle <- read.csv('nettle_1999_climate.csv')
+
+# Convert data frame to tibble:
+nettle <- as_tibble(nettle)
+nettle
+```
+
+```{r}
+nettle <- read_csv('nettle_1999_climate.csv')
+
+```
+```{r}
+nettle
+
+```
+
+```{r}
+str(nettle) # base R inspect the dataframe
+glimpse(nettle) #tidyverse inspect the dataframe
+
+```
+
+
+
+```{r}
+ggplot(nettle) +
+geom_point(mapping = aes(x = MGS, y = Langs))
+```
+
+```{r}
+ggplot(nettle, aes(x = Population, y = Area)) +
+  geom_point()
+```
+
+```{r}
+nettle%>%filter(Area > 6)
+```
+
+
+```{r}
+ggplot(nettle, aes(x = MGS, y = Langs, label = Country)) +
+geom_text()
+```
+
+
+```{r}
+ggsave('nettle.png', width = 8, height = 6)
+```
+
+```{r}
+# Create plots and save them in plot1 and plot2:
+plot1 <- ggplot(nettle) +
+geom_point(mapping = aes(x = MGS, y = Langs))
+plot2 <- ggplot(nettle,
+aes(x = MGS, y = Langs, label = Country)) +
+geom_text()
+# Plot double plot:
+library(gridExtra)
+grid.arrange(plot1, plot2, ncol = 2)
+```
+```{r}
+# Create plots and save them in plot1 and plot2:
+plot1 <- ggplot(nettle) +
+geom_point(mapping = aes(x = MGS, y = Langs))
+plot2 <- ggplot(nettle,
+aes(x = MGS, y = Langs, label = Country)) +
+geom_text()
+# Plot double plot:
+library(gridExtra)
+grid.arrange(plot1, plot2, ncol = 2)
+```
+```{r}
+# Plotting pipeline with %>%:
+nettle %>%
+filter(MGS > 8) %>%
+ggplot(aes(x = MGS, y = Langs, label = Country)) +
+geom_text()
 ```
 
