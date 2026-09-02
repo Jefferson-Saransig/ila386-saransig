@@ -7,11 +7,10 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#install.packages("tidyverse") deberia estar aqui??
-install.packages("janitor")
+#install.packages("janitor")
 library(tidyverse)
 library(gridExtra)
-#library("janitor") REVISAR ESTO
+library(janitor)
 ```
 
 ## Winter CH 1
@@ -27,41 +26,21 @@ names
 ```
 
 
-```{r}
-2*2
-2*3
-3*4
-mynums <- 10:1
-```
 
-
-```{r}
-mynums[1]
-```
-
-```{r}
-mynums>4
-```
 ```{r}
 list.files()
-head(nettle)
+head(nettle) #head() shows the first few rows of a data frame
 nettle <- read.csv('nettle_1999_climate.csv')
 head(nettle)
-tail(nettle)
+tail(nettle) #head() shows the last few rows of a data frame
 ```
+
+
 ```{r}
-x <- readLines('qvi_2026_07_22_llaktamanta_2_gual', n = 2)
-```
-```{r}
-list.files()
-read_tsv("qvi_2026_07_22_llaktamanta_2_gual.tsv")
-```
-```{r}
-hist(nettle$Langs)
-```
-```{r}
+hist(nettle$Langs) # the $ operator extracts a specific column (or list element) by name from a data frame or list.
 hist(nettle$Langs, col = 'salmon')
 ```
+
 ```{r}
 hist(nettle$Langs, col = 'steelblue')
 ```
@@ -70,6 +49,7 @@ x_values <- c(1, 2, 3, 4, 5, 6, 7, 8, 9)
 mean_x <- mean(x_values)
 mean_x #para sacar el valor de la media
 ```
+
 ```{r}
 x <- c(2, 3, 4, '4')
 x <- as.numeric(x)
@@ -87,12 +67,10 @@ nettle[1:4, c('Country', 'Langs')]
 head(nettle[,])
 
 ```
-```{r}
-nettle <- read_csv('nettle_1999_climate.csv')
-```
+
 ```{r}
 # Load data:
-nettle <- read.csv('nettle_1999_climate.csv')
+nettle <- read.csv('nettle_1999_climate.csv') #"read.csv" is part of Base R
 
 # Convert data frame to tibble:
 nettle <- as_tibble(nettle)
@@ -109,16 +87,8 @@ nettle
 ```
 
 ```{r}
-str(nettle) # base R inspect the dataframe
-glimpse(nettle) #tidyverse inspect the dataframe
-
-```
-
-
-
-```{r}
 ggplot(nettle) +
-geom_point(mapping = aes(x = MGS, y = Langs))
+geom_point(mapping = aes(x = MGS, y = Langs)) # "mapping" can be omitted
 ```
 
 ```{r}
@@ -163,11 +133,50 @@ geom_text()
 library(gridExtra)
 grid.arrange(plot1, plot2, ncol = 2)
 ```
+
 ```{r}
 # Plotting pipeline with %>%:
 nettle %>%
 filter(MGS > 8) %>%
 ggplot(aes(x = MGS, y = Langs, label = Country)) +
 geom_text()
+```
+
+```{r}
+str(nettle) # base R inspect the dataframe
+glimpse(nettle) #tidyverse inspect the dataframe
+
+```
+
+
+Exercises from textbook 2.11.3-4
+```{r}
+head(nettle)
+```
+```{r}
+filter(nettle, Country == 'Benin')
+```
+```{r}
+filter(nettle, Country %in% c('Benin', 'Zaire')) #checks whether each value in a vector matches any value in a set of values — it returns TRUE/FALSE for each element
+```
+```{r}
+select(nettle, Langs)
+```
+
+```{r}
+filter(nettle, Country == 'Benin') %>% select(Langs)
+```
+```{r}
+filter(nettle, Country == 'Benin') %>%
+select(Population:MGS)
+```
+```{r}
+filter(nettle, Langs > 200)
+```
+```{r}
+filter(nettle, Langs > 200, Population < median(Population)) #Population < median(Population) means:Keep only countries whose population is below the median population of the whole dataset
+```
+```{r}
+median(nettle$Population) #in this case we need $ not comma as meadian takes one specific colum from the data frame
 ```
 
