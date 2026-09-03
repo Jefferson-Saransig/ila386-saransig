@@ -37,8 +37,16 @@ Enter names of packages
 Enter names of functions here and info what they do, theur arguments, etc.
 -filter
 -ggplot
-##Operators
+-range() returns the minimum and maximum value of a vector.
+-mutate() adds a new column or modifies an existing column in a data frame.
+-ifelse() returns one value if a condition is TRUE, another if FALSE
+-group_by() splits your data into separate groups based on a column's values, so that any calculation you do afterward (like summarize()) is done separately for each group, instead of on the whole dataset at once.
 
+##Operators
+- $ extracts a specific column by name, e.g. nettle$Langs.
+- %in% checks whether each value in a vector matches any value in a given set; returns TRUE/FALSE.
+- %>% the pipe operator; passes the result on its left as the first argument into the function on its right.
+- <- assignment operator; stores a value/result into a named object.
 ##Additional notes
 notes to myself
 note 1
