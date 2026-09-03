@@ -148,11 +148,16 @@ glimpse(nettle) #tidyverse inspect the dataframe
 
 ```
 
+```{r}
+median(nettle$Population) #in this case we need $ not comma as meadian takes one specific colum from the data frame
+```
 
 Exercises from textbook 2.11.3-4
 ```{r}
 head(nettle)
+
 ```
+
 ```{r}
 filter(nettle, Country == 'Benin')
 ```
@@ -175,8 +180,39 @@ filter(nettle, Langs > 200)
 ```
 ```{r}
 filter(nettle, Langs > 200, Population < median(Population)) #Population < median(Population) means:Keep only countries whose population is below the median population of the whole dataset
+
+
+
 ```
+
+Exercises 2.11.4
+
 ```{r}
-median(nettle$Population) #in this case we need $ not comma as meadian takes one specific colum from the data frame
+# Reduce the nettle tibble to small countries:
+smallcountries <- filter(nettle, Population < 4)
+
+# Create categorical MGS variable:
+nettle_MGS <- mutate(smallcountries,
+MGS_cat = ifelse(MGS < 6, 'dry', 'fertile'))
+
+# Group tibble for later summarizing:
+nettle_MGS_grouped <- group_by(nettle_MGS, MGS_cat)
+
+# Compute language counts for categorical MGS variable:
+summarize(nettle_MGS_grouped, LangSum = sum(Langs))
 ```
+
+
+
+
+My try: Can you condense all of these steps
+into a single pipeline where the nettle tibble is first piped to filter(), then to
+mutate(), then to group_by(), and finally to summarize()?
+
+```{r}
+nettle_tibble <- filter(nettle, Population < 4) %>% mutate(MGS_cat = ifelse(MGS < 6, 'dry', 'fertile')) %>% group_by(MGS_cat) %>% summarize (LangSum = sum(Langs)) 
+
+nettle_tibble
+```
+
 
