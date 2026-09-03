@@ -193,7 +193,7 @@ smallcountries <- filter(nettle, Population < 4)
 
 # Create categorical MGS variable:
 nettle_MGS <- mutate(smallcountries,
-MGS_cat = ifelse(MGS < 6, 'dry', 'fertile'))
+MGS_cat = ifelse(MGS < 6, 'dry', 'fertile')) #we can have string things together with the "&" like, to have 3 conditions
 
 # Group tibble for later summarizing:
 nettle_MGS_grouped <- group_by(nettle_MGS, MGS_cat)
@@ -211,8 +211,23 @@ mutate(), then to group_by(), and finally to summarize()?
 
 ```{r}
 nettle_tibble <- filter(nettle, Population < 4) %>% mutate(MGS_cat = ifelse(MGS < 6, 'dry', 'fertile')) %>% group_by(MGS_cat) %>% summarize (LangSum = sum(Langs)) 
+#mutate: i am gonna create sth new
 
 nettle_tibble
+
+
+#case_when
+
+nettle %>% 
+  filter(Population < 4) %>%
+  mutate(
+    MGS_cat = case_when(
+      MGS < 4 ~ "very dry",
+      MGS < 6 ~ "dry",
+      MGS < 8 ~ "fertile",
+      MGS >= 8 ~ "very fertile"
+    )
+  )
 ```
 
 
