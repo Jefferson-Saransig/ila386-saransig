@@ -227,7 +227,9 @@ nettle %>%
       MGS < 8 ~ "fertile",
       MGS >= 8 ~ "very fertile"
     )
-  )
+  ) %>% 
+  group_by(MGS_cat) %>% 
+  summarize (LangSum = sum(Langs))
 ```
 
 
