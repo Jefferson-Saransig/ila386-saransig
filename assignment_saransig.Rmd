@@ -1,0 +1,107 @@
+---
+title: "Assignent_Sarasig"
+author: "JEFFERSON SARANSIG"
+date: "2026-09-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+##Research Interests
+
+1.  What do you want to work on this semester, and why does it interest you?
+
+I am interested in language contact and bilingualism in Indigenous communities, particularly contact between Ecuadorian Kichwa (EK) and Spanish. During this semester, I would like to work on discourse analysis and lexical and grammatical borrowing in EK, and investigate whether borrowing patterns change across different discourse genres. For me, this is interesting because grammatical analyses often focus on structures within the sentence rather than on larger discourse contexts. Therefore, I want to learn how to quantify patterns in recordings and interviews and examine whether certain parts of speech are more prone to being replaced by Spanish.
+
+2.  What is already known about it? A source or two is plenty.
+
+There is a good amount of research on lexical borrowing in different Quechuan languages. For example, Gómez-Rendón (2008) analyzed the constraints on lexical borrowing in a variety of Kichwa spoken close to a mixed language, Media Lengua. However, to the extent of my knowledge, there has not been an extensive analysis of whether borrowing varies across different speech genres. There also appears to be limited longitudinal research examining changes in borrowing over time, which could be useful for understanding the current state of the language. 
+
+3.  What kind of result would count as an interesting answer?
+
+I think it would be interesting to find out whether certain discourse connectives or markers appear more frequently in some genres than in others. This could raise questions about whether certain genres, such as oral stories, are more resistant to lexical borrowing.
+Also, if we have enough data from different communities, we could determine where Spanish borrowings are more salient or common and consider what this might mean for language maintenance and the intergenerational transmission of the Indigenous language.
+
+##Your Data
+
+1) Where it comes from?
+
+The data I have comes from fieldwork done during the summer of 2026. I collected them in urban and peri-urban communities in Imbabura province, Ecuador. People participating are men and women, all of them adults who participated voluntarily. The recordings vary in content; some are conversations, narratives, or elicited data.
+
+2) What a row is?
+
+For my objective, each row would represent one word token. Each row would include the word itself, its origin (Kichwa or Spanish), its part of speech, the discourse genre, and information about the speaker. I think that by keeping the data at the token level, I could later group them and count tokens by discourse marker, part of speech, or genre, which lets me identify not just overall borrowing rates but which specific markers are most affected and whether this varies by genre.
+
+3) How big it is or would be?
+
+After checking a sample recording in ELAN, speech rate was approximately 90 words per minute. Across my full set of recordings (about 12 hours total, 40 minutes each), this yields an estimated 60,000~65,000 word tokens. There would be about six columns.
+
+4) The variables 
+
+| Variable | Type | Description |
+|---|---|---|
+| token_id | ID | Unique identifier for each word token |
+| recording_id | ID | Identifier for the recording the token comes from |
+| speaker_id | ID | Coded speaker identifier, e.g. "p1", "p2" |
+| word | categorical | The transcribed word |
+| origin | categorical | Language origin of the token: "Kichwa" or "Spanish" |
+| pos | categorical | Grammatical category, e.g. noun, discourse marker |
+| genre | categorical | Type of discourse: "narrative", "conversation", or "elicited" |
+| community | categorical | Community where the audio was recorded |
+
+
+
+5) What worries you
+
+I think I do not have a lot of diversity of the data I collected, and categorizing different genres may sometimes be difficult because natural speech is very dynamic and people do not stick to only one discourse genre. Also, I am not sure if the way I have organized the rows is correct and would help me answer my questions. Finally, it seems to be challenging to code and categorize all the data that I have in one semester, so probably I will have to work with a sample. 
+
+##Summarizing the data in R
+
+```{r}
+kichwa_data <- read_csv("kichwa_data.csv")
+glimpse(kichwa_data)
+head(kichwa_data)
+```
+With glimpse() I can see all the columns I created, their data type and see some of the values of the rows. I tried the same thing with head() and personally it is easier to read using that as it is similar to how I organized the data in excel. 
+
+```{r}
+kichwa_selected <- kichwa_data %>% 
+  select(word:genre)
+head(kichwa_selected)
+
+```
+I think these four columns give me the information I need to answer some research questions. Since I do not yet have data from other communities, I did not include that variable here, but it may be useful later for comparing variation between communities within the province. For now, I have enough information to examine variation within one speaker across two discourse genres.
+
+```{r}
+kichwa_marker <- kichwa_data %>%
+  filter(pos=="discourse_marker")
+kichwa_marker
+
+```
+What I see with filter() is all the occurrences that I coded as discourse_marker across my entire dataset. However, if I want to compare discourse markers across genres, I think I need to first create a subset for each genre and then filter for discourse markers within each subset.
+
+
+```{r}
+kichwa_data <- kichwa_data %>%
+  mutate(borrowed = ifelse(origin == "spanish", 1, 0))
+
+head(kichwa_data)
+```
+With mutate(), I am adding a new column called borrowed. This column assigns a 1 to words that come from Spanish and a 0 to words that do not. This could be useful for later analysis.
+
+
+```{r}
+kichwa_summary <- kichwa_data %>%
+  group_by(genre) %>% 
+  summarise(
+    n_tokens = n(),
+    pct_borrowed = mean(borrowed) * 100
+  )
+kichwa_summary
+
+```
+Now, in this last step, I can see the percentage of borrowings for each discourse genre. However, I noticed that this percentage includes all the borrowed words in my data, not just discourse markers. I assume I can use filter() before group_by() to include only the words coded as discourse markers 
+
