@@ -216,4 +216,21 @@ nettle %>%
   summarize (LangSum = sum(Langs))
 ```
 
+fct_relevel ordena segun el orden dado: "very dry", "dry", "fertile", "very fertile"
+```{r} 
+nettle %>%
+  filter(Population < 4) %>%
+  mutate(
+    MGS_cat = case_when(
+      MGS <  4 ~ "very dry",
+      MGS <  6 ~ "dry",
+      MGS <  8 ~ "fertile",
+      MGS >= 8 ~ "very fertile",
+      .unmatched = "error"
+    ),
+    MGS_cat = fct_relevel(MGS_cat, "very dry", "dry", "fertile", "very fertile")
+  ) %>%
+  group_by(MGS_cat) %>%
+  summarize(LangSum = sum(Langs))
+```
 
