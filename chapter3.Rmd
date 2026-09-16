@@ -1,0 +1,92 @@
+---
+title: "chapter_3"
+author: "JEFFERSON SARANSIG"
+date: "2026-09-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+```{r}
+# Generate 50 random uniformly distributed numbers:
+x <- runif(50)
+# Check:
+x
+#para especificar rango de numeros
+x <- runif(50, min = 2, max = 6)
+head(x)
+```
+Plottng a histogram
+```{r}
+hist(x, col = 'steelblue')
+```
+randmly distributed data
+```{r}
+x <- rnorm(50)
+hist(x, col = 'steelblue')
+abline(v = mean(x), lty = 2, lwd = 2) #lty is type of line --dashed, lwd is width of line
+```
+specifying option arguments mean and sd:
+```{r}
+x <- rnorm(50, mean = 5, sd = 2)
+```
+
+mean and sd:
+```{r}
+mean(x)
+
+```
+```{r}
+sd(x) 
+```
+quantile
+```{r}
+quantile(x)
+```
+quantile 16
+```{r}
+quantile(x, 0.16)
+```
+quantile 84
+```{r}
+quantile(x, 0.84)
+```
+sanity check
+```{r}
+mean(x)-sd(x)
+
+
+```
+```{r}
+mean(x)+sd(x)
+
+
+```
+```{r}
+# 2.5th percentile:
+quantile(x, 0.025)
+```
+```{r}
+# Should correspond to M – 2 * SD:
+mean(x) - 2 * sd(x)
+```
+```{r}
+# 97.5th percentile:
+quantile(x, 0.975)
+```
+```{r}
+# Should correspond to M + 2 * SD:
+mean(x) + 2 * sd(x)
+```
+```{r}
+hist(rnorm(n = 20)) # execute repeatedly
+```
+Chapter 3 exercises
+```{r}
+war <- read_csv('warriner_2013_emotional_valence.csv')
+```
+
