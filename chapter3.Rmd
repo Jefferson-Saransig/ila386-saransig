@@ -30,7 +30,7 @@ x <- rnorm(50)
 hist(x, col = 'steelblue')
 abline(v = mean(x), lty = 2, lwd = 2) #lty is type of line --dashed, lwd is width of line
 ```
-specifying option arguments mean and sd:
+specifying option arguments mean and sd (asignando valores a mean y sd):
 ```{r}
 x <- rnorm(50, mean = 5, sd = 2)
 ```
@@ -43,7 +43,7 @@ mean(x)
 ```{r}
 sd(x) 
 ```
-quantile
+quantile (where a certain percentage of your data falls below a specific point)
 ```{r}
 quantile(x)
 ```
@@ -83,10 +83,107 @@ quantile(x, 0.975)
 mean(x) + 2 * sd(x)
 ```
 ```{r}
+#20 random numbers from a normal distribution (mean 0, SD 1)-not specified, see above
 hist(rnorm(n = 20)) # execute repeatedly
 ```
 Chapter 3 exercises
 ```{r}
 war <- read_csv('warriner_2013_emotional_valence.csv')
+war
 ```
+
+```{r}
+range(war$Val)
+```
+```{r}
+filter(war, Val == min(Val) | Val == max(Val))
+```
+```{r}
+filter(war, Val %in% range(Val))
+```
+```{r}
+arrange(war, Val) # ascending order
+```
+```{r}
+arrange(war, desc(Val)) # descending order
+```
+```{r}
+mean(war$Val)
+```
+```{r}
+sd(war$Val)
+```
+```{r}
+mean(war$Val) - sd(war$Val)
+```
+
+```{r}
+mean(war$Val) + sd(war$Val)
+```
+```{r}
+quantile(war$Val, c(0.16, 0.84))
+```
+```{r}
+median(war$Val)
+```
+
+```{r}
+quantile(war$Val, 0.5)
+```
+Exercises Ch.3
+With the Warriner et al. (2013) data, create a ggplot2 histogram and plot the mean
+as a vertical line into the plot using geom_vline() and the xintercept aesthetic
+(see Chapter 2). Can you additionally add vertical dashed lines to indicate where 68%
+and 95% of the data lie? (Ignore any warning messages about binwidth that may arise).
+
+```{r}
+ggplot(war, aes(x = Val)) +
+  geom_histogram(fill = 'peachpuff3') +
+  geom_vline(aes(xintercept = mean(war$Val)), linetype = 2) +
+  geom_vline(xintercept = quantile(war$Val, c(0.16, 0.84)), linetype = 3) +
+  geom_vline(xintercept = quantile(war$Val, c(0.025, 0.975)), linetype = 4) +
+  theme_minimal()
+```
+
+Exercise 2:geo_histogram > geom_density
+```{r}
+ggplot(war, aes(x = Val)) +
+  geom_density(fill = 'peachpuff3') +
+  geom_vline(aes(xintercept = mean(war$Val)), linetype = 2) +
+  geom_vline(xintercept = quantile(war$Val, c(0.16, 0.84)), linetype = 3) +
+  geom_vline(xintercept = quantile(war$Val, c(0.025, 0.975)), linetype = 4) +
+  theme_minimal()
+```
+Exercise 3
+Imagine reading a research paper about a grammaticality rating study. It is noted that
+the mean acceptability rating for a particular grammatical construction is 5.25 with a
+standard deviation of 0.4. Assuming normality, what is the interval within which you
+expect 68% of the data to lie? What about 95% of the data? Do you think the assumption
+of approximate normality is reasonable in this case?
+```{r}
+M <- 5.25
+SD <- 0.4
+
+lower_68 <- M - SD
+upper_68 <- M + SD
+
+lower_68
+upper_68
+```
+95%
+
+```{r}
+lower_95 <- M - 2 * SD
+upper_95 <- M + 2 * SD
+
+lower_95
+upper_95
+
+```
+problem: Likert-scale data is discrete (only whole numbers are possible responses), while the normal distribution is a continuous model (mismatch)
+"While the calculated 68% and 95% intervals numerically fit within a plausible Likert scale (e.g., 1–7), there are still reasons to question the assumption of approximate normality. First, Likert-scale responses are discrete rather than continuous, which conflicts with the continuous nature that a normal distribution assumes. Second, since the mean (5.25) sits closer to the upper end of a typical scale, there is less room for values to spread out above the mean than below it, which could produce a skewed rather than symmetric distribution — undermining the normality assumption even though we cannot confirm this from the summary statistics alone."
+
+variable based on low valence and high valence and then map into box plot
+
+
 
