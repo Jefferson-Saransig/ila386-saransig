@@ -104,7 +104,7 @@ xmdl_null <- lm(y ~ 1, data = mydf)
 coef(xmdl_null)
 ```
 
-Chapter 4 Exercises
+Chapter 4 Exercise 1
 ```{r}
 elp <- read.csv("ELP_frequency.csv")
 elp
@@ -122,5 +122,15 @@ elp %>% ggplot(aes(x = log_freq, y = RT)) +
 geom_point() + geom_smooth(method = 'lm') +
   geom_hline(yintercept = mean(elp$RT)) +
 theme_minimal()
+```
+Exercise 2
+```{r}
+xmdl <- lm(y ~ x) #model 1, where y is outcome and x predictor
+xmdl_null <- lm(y ~ 1) #model 2, where y is predicted with mean
+res <- residuals(xmdl) #get residual from model 1
+res_null <- residuals(xmdl_null) #get residual from mdodel 2
+sum(res ^ 2)
+sum(res_null ^ 2)
+1 - (sum(res ^ 2) / sum(res_null ^ 2)) #the model with x accounts for about 86% of the variation in y, relative to the null model
 ```
 
