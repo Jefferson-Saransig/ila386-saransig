@@ -1,0 +1,35 @@
+---
+title: "FEEDBACK"
+author: "Charlie Nagle"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##  General code (review often)
+
+### 9/20/26
+
+I suggest cleaning up your markdown outline (what appears outside of code chunks) to create a more meaningful organizational structure. The # can be used within chunks for notes like ggplot con texto, etc. Please get the outline headings cleaned up by the end of the week. This would include merging the chapter3.Rmd file into your CODE.Rmd file so that all code appears in a single file that you update (better than creating a new file for each chapter).
+
+```{r}
+# code looks good, nothing to comment on so far
+```
+
+
+##. assignment_saransig
+
+You said: "Therefore, I want to learn how to quantify patterns in recordings and interviews and examine whether certain parts of speech are more prone to being replaced by Spanish." This sounds like an interesting project. How would you do that? Based on my reading of your interests, you have several variables: genre (categorical factor with several levels, perhaps conversation, narrative, elicited), borrowing_type (categorical factor with levels of grammatical or lexical), pos (part of speech; categorical factor), and so on. Try to map the design and what you have in your data to variables so that you can begin working on the analysis. Crucially, what will you quantify and how?
+
+You said: "I think I do not have a lot of diversity of the data I collected, and categorizing different genres may sometimes be difficult because natural speech is very dynamic and people do not stick to only one discourse genre." I agree. This is exactly what the Purpura et al. (2015) reading is about. What ideas from that article can you use to ensure that categorizations are valid and reliable?
+
+Other thoughts:
+- How do you determine if something is borrowed?
+- You may want to consider automated processing tools, such as speech-to-text, forced aligners, etc. 
+
+##. CONVENTIONS
+
+You said: "For the audio files, I will archive them in an language archive such as AILLA." Did you get participants' consent to audio sharing? How will you de-identify the data?
