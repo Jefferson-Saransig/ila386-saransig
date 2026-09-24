@@ -120,24 +120,27 @@ head(elp)
 rtmdl <- lm(RT ~ freq_log, data = elp)
 xmdl
 elp %>% ggplot(aes(x = freq_log, y = RT, label=Word)) +
-geom_label() + geom_smooth(method = 'lm') +
+geom_label() + geom_smooth(method = 'lm') + #para tener puntos, seria con geom.point en vez de label
   geom_hline(yintercept = mean(elp$RT)) +
 theme_minimal()
 ```
 
 ```{r}
 rtmdl <- lm(RT ~ freq_log, data = elp)
-xmdl
-elp %>% ggplot(aes(x = freq_log, y = RT, label=Word)) +
-   geom_smooth(method = 'lm') +
-  geom_label() + #mueve las letras sobre la linea
+
+rtmdl
+
+elp %>% 
+  ggplot(aes(x = freq_log, y = RT, label = Word)) +
+  geom_smooth(method = "lm") +
+  geom_label() + 
   geom_hline(yintercept = mean(elp$RT)) +
   scale_x_continuous(limits = c(0, 5)) +
-  labs (
-    x = "Log10(Frequency)"
+  labs(
+    x = "Log10(Frequency)", #para cambiar labels
     y = "RT"
-  )
-theme_minimal()
+  ) +
+  theme_minimal()
 ```
 Exercise 2
 ```{r}
