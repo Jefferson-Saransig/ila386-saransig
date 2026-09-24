@@ -1,0 +1,126 @@
+---
+title: "Chapter_4"
+author: "JEFFERSON SARANSIG"
+date: "2026-09-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+```{r}
+# Generate 50 random numbers:
+x <- rnorm(50)
+# Check first 6 values:
+head(x)
+
+```
+
+```{r}
+# Create y's with intercept = 10 and slope = 3:
+y <- 10 + 3 * x
+plot(x, y, pch = 19) #pch = 19 makes a straght line, never happens in real life
+```
+
+```{r}
+error <- rnorm(50) #rnorm adds noise 
+y <- 10 + 3 * x + error
+plot(x, y, pch = 19)
+```
+```{r}
+xmdl <- lm(y ~ x)
+xmdl
+```
+```{r}
+head(fitted(xmdl)) #retrieves fitte values
+```
+
+```{r}
+head(residuals(xmdl)) #retrieves residuals
+```
+```{r}
+summary(xmdl)
+```
+```{r}
+coef(xmdl)
+```
+
+```{r}
+coef(xmdl)[1] #retreieves intercept
+```
+```{r}
+coef(xmdl)[2] #retreieves slope
+```
+
+```{r}
+# Alternative way of indexing (by name):
+coef(xmdl)['(Intercept)']
+```
+```{r}
+coef(xmdl)['x']
+
+```
+```{r}
+coef(xmdl)['(Intercept)'] + coef(xmdl)['x'] * 10
+```
+```{r}
+xvals <- seq(from = -3, to = 3, by = 0.1)
+mypreds <- tibble(x = xvals)
+mypreds$fit <- predict(xmdl, newdata = mypreds) #this code stores the output of the mypreds tibble in a new column, called fit
+mypreds
+```
+LINEAR MODELS WITH TIDYVERSE FUNCTIONS
+```{r}
+mydf <- tibble(x, y)
+xmdl <- lm(y ~ x, data = mydf)
+library(broom)
+# Print tidy coefficient table to console:
+tidy(xmdl)
+```
+```{r}
+# Extract estimate column from coefficient table:
+tidy(xmdl)$estimate
+```
+```{r}
+# Check overall model performance:
+glance(xmdl)
+```
+
+```{r}
+mydf %>% ggplot(aes(x = x, y = y)) +
+geom_point() + geom_smooth(method = 'lm') +
+theme_minimal()
+```
+
+4.8 Intercept Placeholders
+```{r}
+xmdl <- lm(y ~ x, data = mydf)
+# Same as:
+xmdl <- lm(y ~ 1 + x, data = mydf)
+
+# Fitting an intercept-only model:
+xmdl_null <- lm(y ~ 1, data = mydf)
+coef(xmdl_null)
+```
+
+Chapter 4 Exercises
+```{r}
+elp <- read.csv("ELP_frequency.csv")
+elp
+head(elp)
+```
+```{r}
+elp <- elp %>%
+  mutate(log_freq = log10(Freq))
+head(elp)
+```
+```{r}
+rtmdl <- lm(RT ~ log_freq, data = elp)
+xmdl
+elp %>% ggplot(aes(x = log_freq, y = RT)) +
+geom_point() + geom_smooth(method = 'lm') +
+  geom_hline(yintercept = mean(elp$RT)) +
+theme_minimal()
+```
+
