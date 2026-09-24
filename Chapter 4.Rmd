@@ -65,7 +65,7 @@ coef(xmdl)['x']
 coef(xmdl)['(Intercept)'] + coef(xmdl)['x'] * 10
 ```
 ```{r}
-xvals <- seq(from = -3, to = 3, by = 0.1)
+xvals <- seq(from = -3, to = 3, by = 0.1) #la secuencia se puede usar porque quiza lo que queremos analizar esta en este rango
 mypreds <- tibble(x = xvals)
 mypreds$fit <- predict(xmdl, newdata = mypreds) #this code stores the output of the mypreds tibble in a new column, called fit
 mypreds
@@ -112,15 +112,31 @@ head(elp)
 ```
 ```{r}
 elp <- elp %>%
-  mutate(log_freq = log10(Freq))
+  mutate(freq_log = log10(Freq)) # para nombrar seria mejor seguir freq y despues las modificaciones
 head(elp)
 ```
+
 ```{r}
-rtmdl <- lm(RT ~ log_freq, data = elp)
+rtmdl <- lm(RT ~ freq_log, data = elp)
 xmdl
-elp %>% ggplot(aes(x = log_freq, y = RT)) +
-geom_point() + geom_smooth(method = 'lm') +
+elp %>% ggplot(aes(x = freq_log, y = RT, label=Word)) +
+geom_label() + geom_smooth(method = 'lm') +
   geom_hline(yintercept = mean(elp$RT)) +
+theme_minimal()
+```
+
+```{r}
+rtmdl <- lm(RT ~ freq_log, data = elp)
+xmdl
+elp %>% ggplot(aes(x = freq_log, y = RT, label=Word)) +
+   geom_smooth(method = 'lm') +
+  geom_label() + #mueve las letras sobre la linea
+  geom_hline(yintercept = mean(elp$RT)) +
+  scale_x_continuous(limits = c(0, 5)) +
+  labs (
+    x = "Log10(Frequency)"
+    y = "RT"
+  )
 theme_minimal()
 ```
 Exercise 2
@@ -133,4 +149,5 @@ sum(res ^ 2)
 sum(res_null ^ 2)
 1 - (sum(res ^ 2) / sum(res_null ^ 2)) #the model with x accounts for about 86% of the variation in y, relative to the null model
 ```
+
 
