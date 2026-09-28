@@ -201,7 +201,7 @@ nettle_tibble <- filter(nettle, Population < 4) %>% mutate(MGS_cat = ifelse(MGS 
 nettle_tibble
 ```
 
-#case_when
+##case_when
 ```{r}
 
 
