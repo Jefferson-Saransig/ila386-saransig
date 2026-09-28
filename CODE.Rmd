@@ -13,7 +13,7 @@ library(gridExtra)
 library(janitor)
 ```
 
-## Winter CH 1; code from ch 1 of winter textbook
+# Winter CH 1; code from ch 1 of winter textbook
 ```{r}
 numbers <- c(18, 200, 92, 14)
 sum(numbers)
@@ -24,7 +24,7 @@ names
 
 ```
 
-##same as above 
+
 ```{r}
 list.files()
 head(nettle) #head() shows the first few rows of a data frame
@@ -34,7 +34,7 @@ tail(nettle) #head() shows the last few rows of a data frame
 ```
 
 
-##histogram of langs per country+salmon
+##histogram (langs+color)
 ```{r} 
 
 hist(nettle$Langs) # the $ operator extracts a specific column (or list element) by name from a data frame or list.
@@ -70,7 +70,7 @@ head(nettle[,])
 
 ```
 
-##loading nettle con read.csv
+## read.csv function
 ```{r}
 # Load data:
 nettle <- read.csv('nettle_1999_climate.csv') #"read.csv" is part of Base R
@@ -79,17 +79,19 @@ nettle <- read.csv('nettle_1999_climate.csv') #"read.csv" is part of Base R
 nettle <- as_tibble(nettle)
 nettle
 ```
-##loading nettle con read_csv
+##read_csv function
 ```{r}
 nettle <- read_csv('nettle_1999_climate.csv')
 nettle
 
 ```
-##filter con piping
-```{r}
+
+**filter con piping**
+
+```{r} 
 nettle%>%filter(Area > 6)
 ```
-##ggplot con points
+**ggplot con points**
 ```{r}
 ggplot(nettle) +
 geom_point(mapping = aes(x = MGS, y = Langs)) # "mapping" can be omitted
@@ -102,17 +104,17 @@ ggplot(nettle, aes(x = Population, y = Area)) +
 
 
 
-##ggplot con texto
+**ggplot con texto**
 ```{r}
 ggplot(nettle, aes(x = MGS, y = Langs, label = Country)) +
 geom_text()
 ```
 
-##save an image
+
 ```{r}
-ggsave('nettle.png', width = 8, height = 6)
+ggsave('nettle.png', width = 8, height = 6) #to save an image
 ```
-# Create plots and save them in plot1 and plot2:
+
 ```{r}
 # Create plots and save them in plot1 and plot2:
 plot1 <- ggplot(nettle) +
@@ -125,7 +127,7 @@ library(gridExtra)
 grid.arrange(plot1, plot2, ncol = 2)
 ```
 
-# Plotting pipeline with %>%:
+
 ```{r}
 # Plotting pipeline with %>%:
 nettle %>%
@@ -133,18 +135,20 @@ filter(MGS > 8) %>%
 ggplot(aes(x = MGS, y = Langs, label = Country)) +
 geom_text()
 ```
-#how to inspect data frame:
+
 ```{r}
+#how to inspect data frame:
 str(nettle) # base R inspect the dataframe
 glimpse(nettle) #tidyverse inspect the dataframe
 
 ```
-#median with $
+
 ```{r}
+#median with $
 median(nettle$Population) #in this case we need $ not comma as meadian takes one specific colum from the data frame
 ```
 
-#Exercises from textbook 2.11.3-4
+#Winter Ch 2.11.3-4
 
 
 ```{r}
@@ -170,9 +174,10 @@ filter(nettle, Langs > 200, Population < median(Population)) #Population < media
 
 ```
 
-#Exercises 2.11.4
+
 
 ```{r}
+#Exercises 2.11.4
 # Reduce the nettle tibble to small countries:
 smallcountries <- filter(nettle, Population < 4)
 
@@ -187,18 +192,16 @@ nettle_MGS_grouped <- group_by(nettle_MGS, MGS_cat)
 summarize(nettle_MGS_grouped, LangSum = sum(Langs))
 ```
 
-# My try: Can you condense all of these steps
-into a single pipeline where the nettle tibble is first piped to filter(), then to
-mutate(), then to group_by(), and finally to summarize()?
 
 ```{r}
+# My try: Can you condense all of these steps
 nettle_tibble <- filter(nettle, Population < 4) %>% mutate(MGS_cat = ifelse(MGS < 6, 'dry', 'fertile')) %>% group_by(MGS_cat) %>% summarize (LangSum = sum(Langs)) 
 #mutate: i am gonna create sth new
 
 nettle_tibble
 ```
 
-#case_when revisar
+#case_when
 ```{r}
 
 
@@ -209,15 +212,19 @@ nettle %>%
       MGS < 4 ~ "very dry",
       MGS < 6 ~ "dry",
       MGS < 8 ~ "fertile",
-      MGS >= 8 ~ "very fertile"
-    )
+      MGS >= 8 ~ "very fertile",
+      .unmatched = "error"
+    ),
+    MGS_cat = fct_relevel(MGS_cat, "very dry", "dry", "fertile", "very fertile") #para ordenar las categorias
+  
   ) %>% 
   group_by(MGS_cat) %>% 
   summarize (LangSum = sum(Langs))
 ```
 
-fct_relevel ordena segun el orden dado: "very dry", "dry", "fertile", "very fertile"
+
 ```{r} 
+# get descriptive statistics for the smallpopulation data
 nettle %>%
   filter(Population < 4) %>%
   mutate(
@@ -231,6 +238,280 @@ nettle %>%
     MGS_cat = fct_relevel(MGS_cat, "very dry", "dry", "fertile", "very fertile")
   ) %>%
   group_by(MGS_cat) %>%
-  summarize(LangSum = sum(Langs))
+  summarize(mean = mean(Langs) %>% round(2),
+            sd = sd(Langs) %>% round(2),
+            min = min(Langs),
+            max = max(Langs))
 ```
+#Winter Ch 3
+
+
+```{r}
+# Generate 50 random uniformly distributed numbers:
+x <- runif(50)
+# Check:
+x
+#para especificar rango de numeros
+x <- runif(50, min = 2, max = 6)
+head(x)
+```
+
+```{r}
+#Plottng a histogram
+hist(x, col = 'steelblue')
+```
+
+```{r}
+#randmly distributed data
+x <- rnorm(50)
+hist(x, col = 'steelblue')
+abline(v = mean(x), lty = 2, lwd = 2) #lty is type of line --dashed, lwd is width of line
+```
+
+```{r}
+#specifying option arguments mean and sd (asignando valores a mean y sd):
+x <- rnorm(50, mean = 5, sd = 2)
+```
+
+###mean and sd:
+```{r}
+mean(x)
+
+```
+```{r}
+sd(x) 
+```
+##quantile 
+```{r}
+quantile(x) #(where a certain percentage of your data falls below a specific point)
+```
+quantile 16
+```{r}
+quantile(x, 0.16)
+```
+quantile 84
+```{r}
+quantile(x, 0.84)
+```
+sanity check
+```{r}
+mean(x)-sd(x)
+
+
+```
+```{r}
+mean(x)+sd(x)
+
+
+```
+```{r}
+# 2.5th percentile:
+quantile(x, 0.025)
+```
+```{r}
+# Should correspond to M – 2 * SD:
+mean(x) - 2 * sd(x)
+```
+```{r}
+# 97.5th percentile:
+quantile(x, 0.975)
+```
+```{r}
+# Should correspond to M + 2 * SD:
+mean(x) + 2 * sd(x)
+```
+```{r}
+#20 random numbers from a normal distribution (mean 0, SD 1)-not specified, see above
+hist(rnorm(n = 20)) # execute repeatedly
+```
+## class activities
+
+```{r}
+# generate and plot a normal distribution
+rnorm(50) %>%
+  hist() # base r
+
+# non-base r version
+rnorm(50) %>%
+  as.data.frame() %>%      # make a data frame
+  rename(score = 1) %>%    # rename the variable
+  ggplot(aes(x = score)) + # make the plot
+  geom_histogram()
+
+# set the mean and sd
+rnorm(50, 71.82, 10.42) %>% #rnorm(number of values, mean, standard deviation)
+  hist() 
+
+# with ggplot
+rnorm(50, 71.82, 10.42) %>%
+  as.data.frame() %>%
+  rename(score = 1) %>% #cambia el nombre de la 1era columna a score
+  ggplot(aes(x = score)) +
+  geom_histogram(color = "black", fill = "white")
+
+# with 12 participants
+rnorm(12, 71.82, 10.42) %>%
+  as.data.frame() %>%
+  rename(score = 1) %>%
+  ggplot(aes(x = score)) +
+  geom_histogram(color = "black", fill = "white")
+# with 1200
+rnorm(1200, 71.82, 10.42) %>%
+  as.data.frame() %>%
+  rename(score = 1) %>%
+  ggplot(aes(x = score)) +
+  geom_histogram(color = "black", fill = "white")
+
+# how would we screen / filter scores > 100 and < 0
+rnorm(1200, 71.82, 10.42) %>%
+  as.data.frame() %>%
+  rename(score = 1) %>%
+  filter(score <= 100) %>%
+  ggplot(aes(x = score)) +
+  geom_histogram(color = "black", fill = "white")
+
+# convert to sds
+rnorm(1200, 71.82, 10.42) %>%
+  as.data.frame() %>%
+  rename(score = 1) %>%
+  filter(score <= 100) %>%
+  mutate(
+    score.z = scale(score) # take the z score (standardize); z-score: How far a score is from the mean, measured in standard deviations.
+  ) %>%
+  ggplot(aes(x = score.z)) +
+  geom_histogram(color = "black", fill = "white")
+```
+## CH 3 exercises
+```{r}
+war <- read_csv('warriner_2013_emotional_valence.csv')
+war
+```
+
+```{r}
+range(war$Val)
+```
+```{r}
+filter(war, Val == min(Val) | Val == max(Val))
+```
+```{r}
+filter(war, Val %in% range(Val))
+```
+```{r}
+arrange(war, Val) # ascending order
+```
+```{r}
+arrange(war, desc(Val)) # descending order
+```
+```{r}
+mean(war$Val)
+```
+```{r}
+sd(war$Val)
+```
+```{r}
+mean(war$Val) - sd(war$Val)
+```
+
+```{r}
+mean(war$Val) + sd(war$Val)
+```
+```{r}
+quantile(war$Val, c(0.16, 0.84))
+```
+```{r}
+median(war$Val)
+```
+
+```{r}
+quantile(war$Val, 0.5)
+```
+Exercises Ch.3
+With the Warriner et al. (2013) data, create a ggplot2 histogram and plot the mean
+as a vertical line into the plot using geom_vline() and the xintercept aesthetic
+(see Chapter 2). Can you additionally add vertical dashed lines to indicate where 68%
+and 95% of the data lie? (Ignore any warning messages about binwidth that may arise).
+
+```{r}
+ggplot(war, aes(x = Val)) +
+  geom_histogram(fill = 'peachpuff3') +
+  geom_vline(aes(xintercept = mean(war$Val)), linetype = 2) +
+  geom_vline(xintercept = quantile(war$Val, c(0.16, 0.84)), linetype = 3) +
+  geom_vline(xintercept = quantile(war$Val, c(0.025, 0.975)), linetype = 4) +
+  theme_minimal()
+```
+
+Exercise 2:geo_histogram > geom_density
+```{r}
+ggplot(war, aes(x = Val)) +
+  geom_density(fill = 'peachpuff3') +
+  geom_vline(aes(xintercept = mean(war$Val)), linetype = 2) +
+  geom_vline(xintercept = quantile(war$Val, c(0.16, 0.84)), linetype = 3) +
+  geom_vline(xintercept = quantile(war$Val, c(0.025, 0.975)), linetype = 4) +
+  theme_minimal()
+```
+Exercise 3
+Imagine reading a research paper about a grammaticality rating study. It is noted that
+the mean acceptability rating for a particular grammatical construction is 5.25 with a
+standard deviation of 0.4. Assuming normality, what is the interval within which you
+expect 68% of the data to lie? What about 95% of the data? Do you think the assumption
+of approximate normality is reasonable in this case?
+```{r}
+M <- 5.25
+SD <- 0.4
+
+lower_68 <- M - SD
+upper_68 <- M + SD
+
+lower_68
+upper_68
+```
+95%
+
+```{r}
+lower_95 <- M - 2 * SD
+upper_95 <- M + 2 * SD
+
+lower_95
+upper_95
+
+```
+problem: Likert-scale data is discrete (only whole numbers are possible responses), while the normal distribution is a continuous model (mismatch)
+"While the calculated 68% and 95% intervals numerically fit within a plausible Likert scale (e.g., 1–7), there are still reasons to question the assumption of approximate normality. First, Likert-scale responses are discrete rather than continuous, which conflicts with the continuous nature that a normal distribution assumes. Second, since the mean (5.25) sits closer to the upper end of a typical scale, there is less room for values to spread out above the mean than below it, which could produce a skewed rather than symmetric distribution — undermining the normality assumption even though we cannot confirm this from the summary statistics alone."
+
+variable based on low valence and high valence and then map into box plot
+
+
+### boxplots
+
+```{r}
+# valence of words a vs p
+library(stringr) #is a package for working with text/strings
+war %>%
+  mutate(
+    word_type = case_when(
+      str_detect(Word, "^a") ~ "a", #str_detect busca patterns within a text; ^ significa If it starts with a, put "a" in word_type
+      str_detect(Word, "^p") ~ "p", #~"p" significa If the condition on the left is TRUE, put "p" in the new column
+      .default = "error" #esta linea dice que hacer en caso de que no haya a ni p
+    )
+  ) %>%
+  filter(word_type != "error") %>% #Keep only words that are not labeled "error"
+  ggplot(aes(x = word_type, y = Val)) +
+  geom_boxplot() +
+  theme_minimal()
+
+# creating a valence factor with levels low, medium, high
+war %>%
+  mutate(
+    word_type = case_when(
+      Val < 3 ~ "low",
+      Val < 7 ~ "medium",
+      Val >= 7 ~ "high",
+      .default = "error"),
+    word_type = fct_relevel(word_type, "low", "medium", "high")
+  ) %>%
+  ggplot(aes(x = word_type, y = Val)) +
+  geom_boxplot() +
+  theme_minimal()
+```
+
 
