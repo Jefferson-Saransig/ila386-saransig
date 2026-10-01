@@ -11,6 +11,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(gridExtra)
 library(janitor)
+library(gridExtra)
+library(stringr) #is a package for working with text/strings
+library(broom)
+
 ```
 
 # Winter CH 1; code from ch 1 of winter textbook
@@ -123,7 +127,7 @@ plot2 <- ggplot(nettle,
 aes(x = MGS, y = Langs, label = Country)) +
 geom_text()
 # Plot double plot:
-library(gridExtra)
+
 grid.arrange(plot1, plot2, ncol = 2)
 ```
 
@@ -485,7 +489,7 @@ variable based on low valence and high valence and then map into box plot
 
 ```{r}
 # valence of words a vs p
-library(stringr) #is a package for working with text/strings
+
 war %>%
   mutate(
     word_type = case_when(
@@ -514,4 +518,112 @@ war %>%
   theme_minimal()
 ```
 
+#Winter Ch 5
+
+```{r}
+RTs <- c(600, 650, 700, 1000, 4000)
+RTs
+logRTs <- log(RTs)
+logRTs
+```
+
+```{r}
+exp(logRTs) # undo the logging
+```
+
+```{r}
+ELP <- read_csv('ELP_frequency.csv')
+ELP
+```
+
+```{r}
+ELP <- mutate(ELP,
+Log10Freq = log10(Freq),
+LogRT = log(RT))
+ELP
+```
+
+```{r}
+#Raw frequencies
+ELP %>% ggplot(aes(x = Freq, y = LogRT, label = Word)) +
+geom_text() +
+geom_smooth(method = 'lm') +
+ggtitle('Log RT ~ raw frequency') +
+theme_minimal()
+```
+
+```{r}
+#log frequency values
+ELP %>% ggplot(aes(x = Log10Freq, y = LogRT,
+label = Word)) +
+geom_text() +
+geom_smooth(method = 'lm') +
+ggtitle('Log RT ~ log frequency') +
+theme_minimal()
+```
+```{r}
+ELP_mdl <- lm(LogRT ~ Log10Freq, data = ELP)
+tidy(ELP_mdl)
+```
+
+```{r}
+b0 <- tidy(ELP_mdl)$estimate[1] # intercept
+b1 <- tidy(ELP_mdl)$estimate[2] # slope
+logRT_10freq <- b0 + b1 * 1
+logRT_1000freq <- b0 + b1 * 3
+logRT_10freq #predicted log response durations
+logRT_1000freq
+exp(logRT_10freq) #back to raw response durations, in miliseconds
+exp(logRT_1000freq)
+```
+```{r}
+ELP <- mutate(ELP,
+Log10Freq_c = Log10Freq - mean(Log10Freq),
+Log10Freq_z = Log10Freq_c / sd(Log10Freq_c)) #how many standard deviations a word's Log10Freq is from the mean
+select(ELP, Freq, Log10Freq, Log10Freq_c, Log10Freq_z)
+```
+
+```{r}
+# Same as before, different approach:
+ELP <- mutate(ELP,
+Log10Freq_c = scale(Log10Freq, scale = FALSE),
+Log10Freq_z = scale(Log10Freq))
+```
+
+linear models with the centered and standardized
+predictors:
+```{r}
+
+ELP_mdl_c <- lm(LogRT ~ Log10Freq_c, ELP) # centered
+ELP_mdl_z <- lm(LogRT ~ Log10Freq_z, ELP) # z-scored
+```
+Comparing the coefficients from the different models:
+```{r}
+tidy(ELP_mdl) %>% select(term, estimate)
+```
+```{r}
+tidy(ELP_mdl_c) %>% select(term, estimate) # x = 0 represents the mean of Log10Freq;the intercept (6.507966) is the predicted response at the mean; slope: a 1-unit increase in Log10Freq = 0.104-unit decrease in response
+```
+
+```{r}
+tidy(ELP_mdl_z) %>% select(term, estimate) # Slope changes: 1 unit of Log10Freq_z = 1 SD of Log10Freq. For a 1 SD increase in Log10Freq, the predicted response decreases by 0.150103 units
+```
+```{r}
+glance(ELP_mdl)$r.squared
+glance(ELP_mdl_c)$r.squared
+glance(ELP_mdl_z)$r.squared #r.squared: how much of the variation in Y is explained by the regression model
+```
+
+```{r}
+glance(lm(LogRT ~ Freq, ELP))$r.squared # Nonlinear transformations of X can change R² and model fit
+```
+```{r}
+with(ELP, cor(Log10Freq, LogRT)) #correlation is negative means that, as frequency increases, response durations become shorter.
+```
+## Recreates correlation using regression with z-scored X and Y; no intercept needed
+```{r}
+ELP_cor <- lm(scale(LogRT) ~ -1 + Log10Freq_z, ELP)
+tidy(ELP_cor) %>% select(estimate) #explanation on p101
+```
+##exercise ch5-guesstimate
 
