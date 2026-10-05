@@ -668,7 +668,7 @@ unique(data_answers$answer) #answer sheet: "nosotros" "yo"       "ellos"    "tu"
 ```{r}
 filter(data_answers, answer == "eu") #so I am assuming there is a typo in the answer column and i will change eu into tu
 ```
-Changing the answers
+##Changing the answers
 ```{r}
 data_stress_clean$response <- ifelse(data_stress_clean$response == "él", "el", data_stress_clean$response) #I am changing the el with accent with the el without accent and without modifying the rest
 unique(data_stress_clean$response) #[1] "tu"       NA         "yo"       "el"       "ellos"    "nosotros"
@@ -756,15 +756,17 @@ data_stress_scored %>%
 
 
 ```{r}
-glimpse(data_stress_scored)
+head(data_stress_scored)
 ```
 ##mean participant/type
 ```{r}
-data_stress_scored %>%
-  group_by(id, type) %>% #each combination of participant (id) and type isa  group
+data_stress_means <- data_stress_scored %>%
+  group_by(id, type) %>% #each combination of participant (id) and type is a  group
   summarise(mean_score = mean(score, na.rm = TRUE)) #mean_score is a new colum w/ each group's mean
+head(data_stress_means)
+unique(data_stress_scored$response) #this should always keep el, tu without the accent
 ```
-
+##data proficiency
 ```{r}
 data_proficiency <- read_csv("PS1/data_proficiency.csv")
 glimpse(data_proficiency)
@@ -779,7 +781,7 @@ data_proficiency %>%
 
 ```
 ```{r}
-count(data_proficiency, tag)
+count(data_proficiency, tag) #dentro de column tag, click parece ser la respuesta del participant
 count(data_proficiency, id) #la mayoria tiene 85 trials, excepto 2
 data_proficiency_counts <- count(data_proficiency, id)
 subset(data_proficiency_counts, n != 85) #sale los datos de los 2 que no completaron todos los ejercicios. Decidi no incluirlos
@@ -791,17 +793,64 @@ unique(data_proficiency$tag)
 
 
 ```{r}
-table(data_proficiency$tag, is.na(data_proficiency$response))
+table(data_proficiency$tag, is.na(data_proficiency$response)) #is.na asks is `response' missing, FALSE=not missing
 head(subset(data_proficiency, tag == "click"), 10) #this shows that the tag "click" has participants' answers
 head(subset(data_proficiency, tag == "rawr"), 10) #response have NA
 head(subset(data_proficiency, tag == "timeout"), 10) #response have literally "timeout"
 ```
+###timeout into NA
 ```{r}
 data_proficiency_clean <- data_proficiency %>%
   filter(tag == "click" | tag == "timeout") %>%
   mutate(response = ifelse(response == "timeout", NA, response))
 unique(data_proficiency_clean$response) #ahora los "timeout" cambiaron a NA en al columna response
-nrow(data_proficiency_clean)
+nrow(data_proficiency_clean) #1862, the same as above with table(it was just to check)
 sum(is.na(data_proficiency_clean$response)) #to check if "timeout" change into NA
+```
+```{r}
+data_proficiency_clean <- data_proficiency_clean %>%
+  select(id, trial, response, answer)
+head(data_proficiency_clean)
+data_proficiency_scored <- data_proficiency_clean %>%
+  mutate(score = ifelse(response == answer, 1, 0))
+table(data_proficiency_scored$score, useNA = "ifany")
+```
+
+```{r}
+head(subset(data_proficiency_scored, score == 0, select = c(response, answer)), 20)
+```
+```{r}
+setdiff(data_proficiency_scored$response, data_proficiency_scored$answer)
+```
+```{r}
+setdiff(data_proficiency_scored$answer, data_proficiency_scored$response) #this shows that all answers where chosen at least once
+head(data_proficiency_scored)
+
+data_proficiency_means <- data_proficiency_scored %>%
+  group_by(id) %>% #solo id porque habian mas de una columna por id y ahora solo 1
+  summarise(proficiency = mean(score, na.rm = TRUE))
+nrow(data_proficiency_means) #38 en total, that is, #of participants
+head(data_proficiency_means)
+```
+```{r}
+count(data_proficiency_clean, id) %>% filter(n != 50)
+incomplete_ids <- c(15411133, 15423803)
+incomplete_ids
+data_proficiency_means <- data_proficiency_means %>%
+  filter(!(id %in% incomplete_ids)) #significa: manten todos exepto los de arriba
+nrow(data_proficiency_means) #36, ya excluidos los dos de arriba
+```
+##incomplete_ids
+```{r}
+data_stress_means <- data_stress_means %>%
+  filter(!(id %in% incomplete_ids))
+```
+###ungrouping incomplete ids
+```{r}
+#ungrouping the two participants who did not finish the task
+data_stress_means <- data_stress_means %>%
+  ungroup() %>%
+  filter(!(id %in% incomplete_ids))
+nrow(data_stress_means) #72, that is, 36 participants x 2types
 ```
 
