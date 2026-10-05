@@ -768,8 +768,40 @@ data_stress_scored %>%
 ```{r}
 data_proficiency <- read_csv("PS1/data_proficiency.csv")
 glimpse(data_proficiency)
+names(data_proficiency) # [1] "id"  "trial"   "response"  [4] "onset_time"             "clock_time"             "reaction_time"         [7] "absolute_onset_time"    "absolute_clock_time"    "absolute_reaction_time" [10] "tag"                    "answer"   
+dim(data_proficiency) #[1] 3188   11
 ```
 ```{r}
-unique(data_proficiency$answer)
+unique(data_proficiency$tag) #tag tiene NA        "rawr"    "click"   "timeout"
+data_proficiency %>%
+  select(id, trial, response, tag, answer) %>%
+  head(20)
+
+```
+```{r}
+count(data_proficiency, tag)
+count(data_proficiency, id) #la mayoria tiene 85 trials, excepto 2
+data_proficiency_counts <- count(data_proficiency, id)
+subset(data_proficiency_counts, n != 85) #sale los datos de los 2 que no completaron todos los ejercicios. Decidi no incluirlos
+```
+```{r}
+subset(data_proficiency, id == 15423803) #BORRAR
+unique(data_proficiency$tag)
+```
+
+
+```{r}
+table(data_proficiency$tag, is.na(data_proficiency$response))
+head(subset(data_proficiency, tag == "click"), 10) #this shows that the tag "click" has participants' answers
+head(subset(data_proficiency, tag == "rawr"), 10) #response have NA
+head(subset(data_proficiency, tag == "timeout"), 10) #response have literally "timeout"
+```
+```{r}
+data_proficiency_clean <- data_proficiency %>%
+  filter(tag == "click" | tag == "timeout") %>%
+  mutate(response = ifelse(response == "timeout", NA, response))
+unique(data_proficiency_clean$response) #ahora los "timeout" cambiaron a NA en al columna response
+nrow(data_proficiency_clean)
+sum(is.na(data_proficiency_clean$response)) #to check if "timeout" change into NA
 ```
 
