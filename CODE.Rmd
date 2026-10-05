@@ -626,4 +626,150 @@ ELP_cor <- lm(scale(LogRT) ~ -1 + Log10Freq_z, ELP)
 tidy(ELP_cor) %>% select(estimate) #explanation on p101
 ```
 ##exercise ch5-guesstimate
+#Problem set 1
+```{r}
+data_stress <- read_csv("PS1/data_stress.csv")
+data_answers <- read_csv("PS1/data_answers.csv")
+glimpse(data_stress)
+
+```
+```{r}
+glimpse(data_answers)
+```
+
+```{r}
+names(data_stress)
+names(data_answers)
+```
+
+```{r}
+unique(data_stress$screen) # NA "instructions" "countdown"    "stimulus"     "response"    "timeout" 
+  data_stress_clean <- filter(data_stress, screen == "response") #screen column has the participants' responses
+data_stress_clean 
+```
+
+```{r}
+nrow(data_stress_clean) #the number of rows is the same as in the instructions
+```
+```{r}
+length(unique(data_stress_clean$id)) #it keeps the 38 participants
+count(data_stress_clean, id) #all 38 participants have 80 trials
+```
+
+```{r}
+count(data_stress_clean, type) #matches 38x48 (distractor) and 38x32(target_items)
+```
+##cleaning
+In the data_stress 'el' has an accent, while in the answer sheet it does not. Also, what is ´eu´ in the answer sheet? typo?
+```{r}
+unique(data_stress_clean$response) #particiapnts response: "tu"       NA         "yo"       "él"       "ellos"    "nosotros"
+unique(data_answers$answer) #answer sheet: "nosotros" "yo"       "ellos"    "tu"       "el"       "eu" 
+```
+```{r}
+filter(data_answers, answer == "eu") #so I am assuming there is a typo in the answer column and i will change eu into tu
+```
+Changing the answers
+```{r}
+data_stress_clean$response <- ifelse(data_stress_clean$response == "él", "el", data_stress_clean$response) #I am changing the el with accent with the el without accent and without modifying the rest
+unique(data_stress_clean$response) #[1] "tu"       NA         "yo"       "el"       "ellos"    "nosotros"
+
+sum(is.na(data_stress_clean$response)) #????
+```
+```{r}
+data_answers$answer <- ifelse(data_answers$answer == "eu", "tu", data_answers$answer)
+unique(data_answers$answer)
+```
+```{r}
+any(duplicated(data_answers$sentence)) #[1] TRUE
+nrow(data_answers) #[1] 130
+```
+```{r}
+data_answers[duplicated(data_answers$sentence), ]
+```
+
+```{r}
+print(data_answers[duplicated(data_answers$sentence), c("sentence", "verb conjugation", "answer")], width = Inf)
+```
+```{r}
+subset(data_answers, sentence == "Aca lo invito")
+```
+
+```{r}
+head(data_stress_clean)
+head(data_answers)
+unique(data_answers$answer)
+```
+
+
+```{r}
+data_stress_clean
+head(data_stress_clean[, c("verb", "tense", "audio")], 12)
+unique(data_stress_clean$audio)
+```
+
+
+```{r}
+head(unique(data_stress_clean$verb), 20)
+head(unique(data_answers$`verb conjugation`), 20)
+```
+##filenames extraction
+Extracting sentences from audio column in data_stress
+```{r}
+data_stress_clean <- data_stress_clean %>%
+  mutate(sentence_clean = gsub(".*_", "", audio)) %>% # keep only what comes after the last underscore
+  mutate(sentence_clean = gsub(".mp3", "", sentence_clean)) # remove the ".mp3"
+head(data_stress_clean$sentence_clean)
+```
+```{r}
+setdiff(data_stress_clean$sentence_clean, data_answers$sentence) #character(0)
+```
+```{r}
+any(duplicated(paste(data_answers$sentence, data_answers$tense))) #paste() glues the two columns into one text per row, so this asks, "does any sentence + tense combination appear more than once?"
+```
+```{r}
+unique(data_stress_clean$tense)
+unique(data_answers$tense) #tenses are written similarly in both files
+```
+```{r}
+head(data_stress_clean)
+head(data_answers_clean)
+```
+##merged
+```{r}
+data_answers_clean <- data_answers[, c("sentence", "tense", "answer")]
+data_stress_merged <- merge(data_stress_clean, data_answers_clean,
+                            by.x = c("sentence_clean", "tense"),
+                            by.y = c("sentence", "tense")
+                            )
+
+```
+##scored
+
+```{r}
+data_stress_scored <- data_stress_merged %>%
+  mutate(score = ifelse(response == answer, 1, 0))
+
+data_stress_scored %>%
+  select(response, answer, score) %>%
+  head(10)
+```
+
+
+```{r}
+glimpse(data_stress_scored)
+```
+##mean participant/type
+```{r}
+data_stress_scored %>%
+  group_by(id, type) %>% #each combination of participant (id) and type isa  group
+  summarise(mean_score = mean(score, na.rm = TRUE)) #mean_score is a new colum w/ each group's mean
+```
+
+```{r}
+data_proficiency <- read_csv("PS1/data_proficiency.csv")
+glimpse(data_proficiency)
+```
+```{r}
+unique(data_proficiency$answer)
+```
 
