@@ -853,4 +853,17 @@ data_stress_means <- data_stress_means %>%
   filter(!(id %in% incomplete_ids))
 nrow(data_stress_means) #72, that is, 36 participants x 2types
 ```
+```{r}
+data_stress_wide <- data_stress_means %>%
+  pivot_wider(names_from = type, values_from = mean_score) #makes one extra column instead of 2 rows
+head(data_stress_wide)
+nrow(data_stress_wide)
+```
+
+```{r}
+data_final <- merge(data_stress_wide, data_proficiency_means, by = "id")
+head(data_final)
+nrow(data_final)
+sum(is.na(data_final)) #sanity check, debe ser 0
+```
 
