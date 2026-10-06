@@ -760,6 +760,7 @@ head(data_stress_scored)
 ```
 ##mean participant/type
 ```{r}
+
 data_stress_means <- data_stress_scored %>%
   group_by(id, type) %>% #each combination of participant (id) and type is a  group
   summarise(mean_score = mean(score, na.rm = TRUE)) #mean_score is a new colum w/ each group's mean
@@ -853,17 +854,29 @@ data_stress_means <- data_stress_means %>%
   filter(!(id %in% incomplete_ids))
 nrow(data_stress_means) #72, that is, 36 participants x 2types
 ```
-```{r}
+##1 row instead of 2
+NO LO USE
 data_stress_wide <- data_stress_means %>%
   pivot_wider(names_from = type, values_from = mean_score) #makes one extra column instead of 2 rows
 head(data_stress_wide)
 nrow(data_stress_wide)
-```
-
-```{r}
+NO LO USE
 data_final <- merge(data_stress_wide, data_proficiency_means, by = "id")
 head(data_final)
 nrow(data_final)
 sum(is.na(data_final)) #sanity check, debe ser 0
+
+```{r}
+data_long <- merge(data_stress_means, data_proficiency_means, by = "id")
+nrow(data_long)
+head(data_long)
 ```
+##plots
+```{r}
+ggplot(data_long, aes(x = type, y = mean_score)) +
+  geom_boxplot()
+```
+
+
+
 
