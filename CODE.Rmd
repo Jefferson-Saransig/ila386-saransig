@@ -88,6 +88,7 @@ nettle
 nettle <- read_csv('nettle_1999_climate.csv')
 nettle
 
+
 ```
 
 **filter con piping**
@@ -517,6 +518,59 @@ war %>%
   geom_boxplot() +
   theme_minimal()
 ```
+#Winter CH4
+```{r}
+# Generate 50 random numbers:
+x <- rnorm(50)
+# Check first 6 values:
+head(x)
+# Create y's with intercept = 10 and slope = 3:
+y <- 10 + 3 * x
+plot(x, y, pch = 19)
+#adding some error
+error <- rnorm(50)
+y <- 10 + 3 * x + error
+plot(x, y, pch = 19)
+```
+```{r}
+#linear model
+xmdl <- lm(y ~ x)
+xmdl
+head(fitted(xmdl))
+head(residuals(xmdl))
+summary(xmdl)
+```
+```{r}
+coef(xmdl)
+# Alternative way of indexing (by name):
+coef(xmdl)['(Intercept)']
+#The following command computes the fitted value for an x-value of 10:
+coef(xmdl)['(Intercept)'] + coef(xmdl)['x'] * 10
+```
+```{r}
+#prediction for a sequence of numbers
+xvals <- seq(from = -3, to = 3, by = 0.1) #from –3 to +3 using the seq() function. This particular sequence is specified to increase in 0.1 intervals (by = 0.1).
+mypreds <- tibble(x = xvals) #The predict() function needs a data frame or tibble as input
+
+mypreds$fit <- predict(xmdl, newdata = mypreds)
+mypreds
+```
+##Linear model w/ tidyverse
+
+```{r}
+mydf <- tibble(x, y)
+xmdl <- lm(y ~ x, data = mydf)
+# Print tidy coefficient table to console:
+tidy(xmdl)
+# Extract estimate column from coefficient table:
+tidy(xmdl)$estimate
+# Check overall model performance:
+glance(xmdl)
+#plot
+mydf %>% ggplot(aes(x = x, y = y)) +
+geom_point() + geom_smooth(method = 'lm') +
+theme_minimal()
+```
 
 #Winter Ch 5
 
@@ -831,6 +885,7 @@ data_proficiency_means <- data_proficiency_scored %>%
   group_by(id) %>% #solo id porque habian mas de una columna por id y ahora solo 1
   summarise(proficiency = mean(score, na.rm = TRUE))
 nrow(data_proficiency_means) #38 en total, that is, #of participants
+range(data_proficiency_means$proficiency)
 head(data_proficiency_means)
 ```
 ```{r}
@@ -871,12 +926,46 @@ data_long <- merge(data_stress_means, data_proficiency_means, by = "id")
 nrow(data_long)
 head(data_long)
 ```
-##plots
+##plot score_type
 ```{r}
 ggplot(data_long, aes(x = type, y = mean_score)) +
   geom_boxplot()
 ```
 
+The boxplot shows that the median of participants' mean scores is generally higher for distractor items than for target items. The median score is approximately 0.80 for distractors and 0.60 for targets. We can also see that the distributions overlap. This may indicate that there is variation in scores and that the difference between item types is not clear-cut.
+
+##plot_prof and score
+```{r}
+
+data_long %>%
+  ggplot(aes(x = proficiency, y = mean_score, color=type)) +
+  geom_point() +
+  geom_smooth(method = 'lm') +
+  theme_minimal()
+```
+
+As proficiency increases, mean scores increase for both distractor and target items. The distractor line sits above the target line across the range of proficiency, and the lines are roughly parallel. The points are loosely clustered around the fitted lines, which indicates that there is reasonable variability between participants with similar proficiency. The shaded bands overlap slightly at the extremes.
+
+##linear model
+```{r}
+ps_model <- lm(mean_score ~ proficiency + type, data = data_long)
+ps_model
+tidy(ps_model)
+summary(ps_model)
+```
+
+##Data analysis
 
 
+**What can we say about the relationship between our predictors and score?** 
 
+The model suggests that both proficiency and type are related to mean score, but in different ways. Proficiency has a positive coefficient of 0.63174, which means that for every one-unit increase in proficiency, the predicted mean score increases by 0.63174. Therefore, participants with higher proficiency are predicted to have higher mean scores. 
+
+Type is also related to mean score. Since distractor is the reference category, the typetarget coefficient of −0.17614 means that target items have a predicted mean score that is 0.17614 lower than distractor items. Thus, the model predicts lower scores for target items than for distractor items at the same level of proficiency.
+
+**As part of your interpretation, explain what the intercept represents in this model. Is it a meaningful value, given the range of proficiency scores in your data?**
+
+The intercept (0.41153) represents the predicted mean score when proficiency is zero and the item type is distractor, the reference category. However, as the proficiency=0 does nto occur in our data-- the range of proficiency is 0.140000  to 0.877551-- tthe intercept is not particularly meaningful for interpreting the observed data; probably, centering the data would be more useful.
+
+**Finally, note that each participant contributes two mean scores to this model (one per item type). Briefly explain why that might be a problem for a linear model. We will return to this issue when we cover mixed-effects models.**
+Each participant contributes two observations (mean scores for each type), and those observations may be correlated because they come from the same participant. Therefore, the model may not take this relationship into account and may treat the two observations as independent of one another
