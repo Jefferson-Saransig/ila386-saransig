@@ -691,16 +691,13 @@ glimpse(data_stress)
 ```{r}
 glimpse(data_answers)
 ```
-##no
-```{r}
-names(data_stress)
-names(data_answers)
-```
+
 ##data_stress response
 ```{r}
 unique(data_stress$screen) #As each trial has several rows, "screen" column shows the label of each row, i.e., NA "instructions" "countdown"    "stimulus"     "response"    "timeout" 
   data_stress_clean <- filter(data_stress, screen == "response") #from screen column i keep only participants' responses
 data_stress_clean 
+
 ```
 
 ```{r}
@@ -717,6 +714,7 @@ count(data_stress_clean, type) #matches 38x48 (distractor) and 38x32(target)
 ##data_stress cleaning
 In the data_stress 'el' has an accent, while in data_answer it does not. Also, what is ´eu´ in the answer sheet? typo?. These functions let me compare both data sets
 ```{r}
+
 unique(data_stress_clean$response) #particiapnts response: "tu"       NA         "yo"       "él"       "ellos"    "nosotros"
 unique(data_answers$answer) #answers: "nosotros" "yo"       "ellos"    "tu"       "el"       "eu" 
 sum(is.na(data_stress_clean$response))  # to see # of trials with no response (86)
@@ -726,79 +724,70 @@ filter(data_answers, answer == "eu") #so I am assuming there is a typo in the an
 ```
 ##Fixing matches-response&answer
 ```{r}
-data_stress_clean$response <- ifelse(data_stress_clean$response == "él", "el", data_stress_clean$response) #I am changing the el with accent with the el without accent and without modifying the rest
+data_stress_clean <- data_stress %>%
+  filter(screen == "response") %>%
+  mutate(response = ifelse(response == "él", "el", response)) #I am changing the el with accent with the el without accent and without modifying the rest
 unique(data_stress_clean$response) #checking: "tu"       NA         "yo"       "el"       "ellos"    "nosotros"
 
 sum(is.na(data_stress_clean$response)) #double check
 ```
 ```{r}
-data_answers$answer <- ifelse(data_answers$answer == "eu", "tu", data_answers$answer)
+data_answers <- data_answers %>%
+  mutate(answer = ifelse(answer == "eu", "tu", answer))
+
 unique(data_answers$answer)
 nrow(data_answers) # 130
 ```
-#I am trying to find a merge key:
+##merge key
 ```{r}
-count(data_answers, sentence)
-any(duplicated(data_answers$sentence)) # TRUE
-data_answers[duplicated(data_answers$sentence), ]
+#I am trying to find a merge key
+head(data_stress_clean)  #response=participant's answer; type, tense, sentence, audio are item info
+head(data_answers)  #sentence, tense, type are shared; answer is what response is compared with
+head(data_stress_clean$sentence)  #weird sentences, poor key; filename in 'audio' is cleaner
+count(data_answers, sentence) #A sentence can appear twice. So sentence alone cannot be the only merge key
+subset(data_answers, sentence == "Aca lo invito")  # same sentence, different tense and answer: tense is needed
+
+unique(data_stress_clean$type)  # distractor, target
+unique(data_answers$type)  # filler, target: labels differ, so type is not used as a key
+
+
+# I tried 'verb' but accents differ between files, and invito/invitó become identical without them
+head(unique(data_stress_clean$verb), 20)  # no accents
+head(unique(data_answers$`verb conjugation`), 20)  # accents are inconsistent 
+
+#This leave me with sentence and tense as merge key(to be tested). I have to fix sentences in data_stress_clean first. I will take sentence from filenames in 'audio' column
 
 ```
 
-```{r}
-print(data_answers[duplicated(data_answers$sentence), c("sentence", "verb conjugation", "answer")], width = Inf)
-```
-```{r}
-subset(data_answers, sentence == "Aca lo invito")
-```
-
-```{r}
-head(data_stress_clean)
-head(data_answers)
-unique(data_answers$answer)
-```
-
-
-```{r}
-data_stress_clean
-head(data_stress_clean[, c("verb", "tense", "audio")], 12)
-unique(data_stress_clean$audio)
-```
-
-
-```{r}
-head(unique(data_stress_clean$verb), 20)
-head(unique(data_answers$`verb conjugation`), 20)
-```
 ##filenames extraction
-Extracting sentences from audio column in data_stress
 ```{r}
+#Extracting sentences from audio column in data_stress
+
 data_stress_clean <- data_stress_clean %>%
   mutate(sentence_clean = gsub(".*_", "", audio)) %>% # keep only what comes after the last underscore
   mutate(sentence_clean = gsub(".mp3", "", sentence_clean)) # remove the ".mp3"
-head(data_stress_clean$sentence_clean)
-```
-```{r}
-setdiff(data_stress_clean$sentence_clean, data_answers$sentence) #character(0)
-```
-```{r}
-any(duplicated(paste(data_answers$sentence, data_answers$tense))) #paste() glues the two columns into one text per row, so this asks, "does any sentence + tense combination appear more than once?"
+unique(data_stress_clean$sentence_clean)
+
+head(data_stress_clean) #now I have an extra column "sentence-clean" to merge
 ```
 ```{r}
 unique(data_stress_clean$tense)
-unique(data_answers$tense) #tenses are written similarly in both files
+unique(data_answers$tense) #tenses are spelled the same in both files
+setdiff(data_stress_clean$sentence_clean, data_answers$sentence) #character(0): this check if both "sentence" columns match
+count(data_answers, sentence, tense) %>% filter(n > 1)  # 0 rows: sentence + tense combination is unique
 ```
-```{r}
-head(data_stress_clean)
-head(data_answers_clean)
-```
+
 ##merged
 ```{r}
-data_answers_clean <- data_answers[, c("sentence", "tense", "answer")]
-data_stress_merged <- merge(data_stress_clean, data_answers_clean,
-                            by.x = c("sentence_clean", "tense"),
-                            by.y = c("sentence", "tense")
-                            )
+#Kept only the key columns+answer; rename sentence so both files use the same key names
+data_answers_clean <- data_answers %>%
+  select(sentence, tense, answer) %>%
+  rename(sentence_clean = sentence)
 
+data_stress_merged <- merge(data_stress_clean, data_answers_clean,
+                            by = c("sentence_clean", "tense"))
+nrow(data_stress_merged)  #3033, same as in instructions; 7 no matches
+sum(is.na(data_stress_merged$answer))  #0: every trial has an answer
 ```
 ##scored
 
@@ -809,129 +798,115 @@ data_stress_scored <- data_stress_merged %>%
 data_stress_scored %>%
   select(response, answer, score) %>%
   head(10)
+unique(data_stress_scored$response) #this should always keep el, tu without the accent
+count(data_stress_scored, score)  #86 NA
+
 ```
 
-
-```{r}
-head(data_stress_scored)
-```
 ##mean participant/type
 ```{r}
-
 data_stress_means <- data_stress_scored %>%
-  group_by(id, type) %>% #each combination of participant (id) and type is a  group
-  summarise(mean_score = mean(score, na.rm = TRUE)) #mean_score is a new colum w/ each group's mean
+  group_by(id, type) %>% #each combination of participant (id) and type(distractor/target) is a  group
+  summarise(mean_score = mean(score, na.rm = TRUE)) #mean_score is a new colum w/ each group's mean; na.rm = TRUE excludes NAs
 head(data_stress_means)
-unique(data_stress_scored$response) #this should always keep el, tu without the accent
+
 ```
 ##data proficiency
 ```{r}
 data_proficiency <- read_csv("PS1/data_proficiency.csv")
-glimpse(data_proficiency)
-names(data_proficiency) # [1] "id"  "trial"   "response"  [4] "onset_time"             "clock_time"             "reaction_time"         [7] "absolute_onset_time"    "absolute_clock_time"    "absolute_reaction_time" [10] "tag"                    "answer"   
-dim(data_proficiency) #[1] 3188   11
+glimpse(data_proficiency) # rows: 3188; columns: 11
+names(data_proficiency) #"id"  "trial"   "response"  [4] "onset_time"             "clock_time"             "reaction_time"         [7] "absolute_onset_time"    "absolute_clock_time"    "absolute_reaction_time" [10] "tag"                    "answer"   
 ```
 ```{r}
-unique(data_proficiency$tag) #tag tiene NA        "rawr"    "click"   "timeout"
 data_proficiency %>%
   select(id, trial, response, tag, answer) %>%
-  head(20)
+  head(20) #cheching columns that seem to be useful
+unique(data_proficiency$tag) #tag: NA  "rawr"  "click"   "timeout"
+
 
 ```
 ```{r}
-count(data_proficiency, tag) #dentro de column tag, click parece ser la respuesta del participant
-count(data_proficiency, id) #la mayoria tiene 85 trials, excepto 2
+count(data_proficiency, tag) #inside tag, "click" seems to be participants response
+count(data_proficiency, id) #most of them have 85 rows except 2
 data_proficiency_counts <- count(data_proficiency, id)
-subset(data_proficiency_counts, n != 85) #sale los datos de los 2 que no completaron todos los ejercicios. Decidi no incluirlos
+data_proficiency_counts
+subset(data_proficiency_counts, n != 85) #2 who did not completed the exercise. To be excluded 
+
 ```
 ```{r}
-subset(data_proficiency, id == 15423803) #BORRAR
 unique(data_proficiency$tag)
 ```
 
 
 ```{r}
 table(data_proficiency$tag, is.na(data_proficiency$response)) #is.na asks is `response' missing, FALSE=not missing
-head(subset(data_proficiency, tag == "click"), 10) #this shows that the tag "click" has participants' answers
-head(subset(data_proficiency, tag == "rawr"), 10) #response have NA
-head(subset(data_proficiency, tag == "timeout"), 10) #response have literally "timeout"
+head(subset(data_proficiency, tag == "click"), 10) #this shows that the tag "click" has participants' responses
+head(subset(data_proficiency, tag == "rawr"), 10) #response have NA. not useful
+head(subset(data_proficiency, tag == "timeout"), 10) #response have literally "timeout", not useful. "Click" is better
 ```
 ###timeout into NA
 ```{r}
 data_proficiency_clean <- data_proficiency %>%
   filter(tag == "click" | tag == "timeout") %>%
   mutate(response = ifelse(response == "timeout", NA, response))
-unique(data_proficiency_clean$response) #ahora los "timeout" cambiaron a NA en al columna response
+unique(data_proficiency_clean$response) #now "timeout" are NA in response column
+count(data_proficiency_clean, id)  # after filtering to click and timeout
 nrow(data_proficiency_clean) #1862, the same as above with table(it was just to check)
 sum(is.na(data_proficiency_clean$response)) #to check if "timeout" change into NA
 ```
+##proficiency_score
 ```{r}
-data_proficiency_clean <- data_proficiency_clean %>%
+# Keep only the columns needed for scoring
+data_proficiency_selected <- data_proficiency_clean %>%
   select(id, trial, response, answer)
 head(data_proficiency_clean)
-data_proficiency_scored <- data_proficiency_clean %>%
+data_proficiency_scored <- data_proficiency_selected %>%
   mutate(score = ifelse(response == answer, 1, 0))
-table(data_proficiency_scored$score, useNA = "ifany")
+count(data_proficiency_scored, score)
+
 ```
 
+
 ```{r}
-head(subset(data_proficiency_scored, score == 0, select = c(response, answer)), 20)
-```
-```{r}
-setdiff(data_proficiency_scored$response, data_proficiency_scored$answer)
-```
-```{r}
-setdiff(data_proficiency_scored$answer, data_proficiency_scored$response) #this shows that all answers where chosen at least once
+setdiff(data_proficiency_scored$answer, data_proficiency_scored$response) #all answers where chosen at least once
 head(data_proficiency_scored)
 
 data_proficiency_means <- data_proficiency_scored %>%
-  group_by(id) %>% #solo id porque habian mas de una columna por id y ahora solo 1
-  summarise(proficiency = mean(score, na.rm = TRUE))
+  group_by(id) %>% #group by id, one mean per participant (no type split here)
+  summarise(proficiency = mean(score, na.rm = TRUE)) # score = NA are excluded, not counted as 0
 nrow(data_proficiency_means) #38 en total, that is, #of participants
+data_proficiency_means
 range(data_proficiency_means$proficiency)
-head(data_proficiency_means)
+
 ```
+##removing incomplete ids
 ```{r}
+##removing incomplete ids from proficiency
 count(data_proficiency_clean, id) %>% filter(n != 50)
 incomplete_ids <- c(15411133, 15423803)
 incomplete_ids
 data_proficiency_means <- data_proficiency_means %>%
-  filter(!(id %in% incomplete_ids)) #significa: manten todos exepto los de arriba
-nrow(data_proficiency_means) #36, ya excluidos los dos de arriba
+  filter(!(id %in% incomplete_ids)) #keep all except incomplete ids
+nrow(data_proficiency_means) # 36 participants completed
 ```
-##incomplete_ids
-```{r}
-data_stress_means <- data_stress_means %>%
-  filter(!(id %in% incomplete_ids))
-```
-###ungrouping incomplete ids
-```{r}
-#ungrouping the two participants who did not finish the task
-data_stress_means <- data_stress_means %>%
-  ungroup() %>%
-  filter(!(id %in% incomplete_ids))
-nrow(data_stress_means) #72, that is, 36 participants x 2types
-```
-##1 row instead of 2
-NO LO USE
-data_stress_wide <- data_stress_means %>%
-  pivot_wider(names_from = type, values_from = mean_score) #makes one extra column instead of 2 rows
-head(data_stress_wide)
-nrow(data_stress_wide)
-NO LO USE
-data_final <- merge(data_stress_wide, data_proficiency_means, by = "id")
-head(data_final)
-nrow(data_final)
-sum(is.na(data_final)) #sanity check, debe ser 0
+
+##remove incomplete ids
 
 ```{r}
-data_long <- merge(data_stress_means, data_proficiency_means, by = "id")
-nrow(data_long)
-head(data_long)
+#removing 2 participants who did not finish the task from data_stress_means
+data_stress_means <- data_stress_means %>%
+  filter(!(id %in% incomplete_ids))
+nrow(data_stress_means)  # 72 = 36 participants x 2 types
+```
+##final merge
+```{r}
+data_complete <- merge(data_stress_means, data_proficiency_means, by = "id")
+nrow(data_complete)
+head(data_complete)
 ```
 ##plot score_type
 ```{r}
-ggplot(data_long, aes(x = type, y = mean_score)) +
+ggplot(data_complete, aes(x = type, y = mean_score)) +
   geom_boxplot()
 ```
 
@@ -940,25 +915,22 @@ The boxplot shows that the median of participants' mean scores is generally high
 ##plot_prof and score
 ```{r}
 
-data_long %>%
+data_complete %>%
   ggplot(aes(x = proficiency, y = mean_score, color=type)) +
   geom_point() +
   geom_smooth(method = 'lm') +
   theme_minimal()
 ```
 
-As proficiency increases, mean scores increase for both distractor and target items. The distractor line sits above the target line across the range of proficiency, and the lines are roughly parallel. The points are loosely clustered around the fitted lines, which indicates that there is reasonable variability between participants with similar proficiency. The shaded bands overlap slightly at the extremes.
-
-##linear model
+As proficiency increases, mean scores increase for both distractor and target items. The fitted line for distractors sits above the fitted line for target across the range of proficiency, and the lines are roughly parallel. The points are loosely clustered around the fitted lines, which indicates that there is reasonable variability between participants with similar proficiency. The shaded bands overlap slightly at the extremes.
+##Data analysis
+###linear model
 ```{r}
-ps_model <- lm(mean_score ~ proficiency + type, data = data_long)
+ps_model <- lm(mean_score ~ proficiency + type, data = data_complete)
 ps_model
 tidy(ps_model)
 summary(ps_model)
 ```
-
-##Data analysis
-
 
 **What can we say about the relationship between our predictors and score?** 
 
