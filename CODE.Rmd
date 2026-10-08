@@ -680,6 +680,7 @@ ELP_cor <- lm(scale(LogRT) ~ -1 + Log10Freq_z, ELP)
 tidy(ELP_cor) %>% select(estimate) #explanation on p101
 ```
 ##exercise ch5-guesstimate
+
 #Problem set 1
 ```{r}
 data_stress <- read_csv("PS1/data_stress.csv")
@@ -690,15 +691,15 @@ glimpse(data_stress)
 ```{r}
 glimpse(data_answers)
 ```
-
+##no
 ```{r}
 names(data_stress)
 names(data_answers)
 ```
-
+##data_stress response
 ```{r}
-unique(data_stress$screen) # NA "instructions" "countdown"    "stimulus"     "response"    "timeout" 
-  data_stress_clean <- filter(data_stress, screen == "response") #screen column has the participants' responses
+unique(data_stress$screen) #As each trial has several rows, "screen" column shows the label of each row, i.e., NA "instructions" "countdown"    "stimulus"     "response"    "timeout" 
+  data_stress_clean <- filter(data_stress, screen == "response") #from screen column i keep only participants' responses
 data_stress_clean 
 ```
 
@@ -706,39 +707,41 @@ data_stress_clean
 nrow(data_stress_clean) #the number of rows is the same as in the instructions
 ```
 ```{r}
-length(unique(data_stress_clean$id)) #it keeps the 38 participants
+length(unique(data_stress_clean$id)) #to chek the # of participants (38)
 count(data_stress_clean, id) #all 38 participants have 80 trials
 ```
 
 ```{r}
-count(data_stress_clean, type) #matches 38x48 (distractor) and 38x32(target_items)
+count(data_stress_clean, type) #matches 38x48 (distractor) and 38x32(target)
 ```
-##cleaning
-In the data_stress 'el' has an accent, while in the answer sheet it does not. Also, what is ´eu´ in the answer sheet? typo?
+##data_stress cleaning
+In the data_stress 'el' has an accent, while in data_answer it does not. Also, what is ´eu´ in the answer sheet? typo?. These functions let me compare both data sets
 ```{r}
 unique(data_stress_clean$response) #particiapnts response: "tu"       NA         "yo"       "él"       "ellos"    "nosotros"
-unique(data_answers$answer) #answer sheet: "nosotros" "yo"       "ellos"    "tu"       "el"       "eu" 
+unique(data_answers$answer) #answers: "nosotros" "yo"       "ellos"    "tu"       "el"       "eu" 
+sum(is.na(data_stress_clean$response))  # to see # of trials with no response (86)
 ```
 ```{r}
 filter(data_answers, answer == "eu") #so I am assuming there is a typo in the answer column and i will change eu into tu
 ```
-##Changing the answers
+##Fixing matches-response&answer
 ```{r}
 data_stress_clean$response <- ifelse(data_stress_clean$response == "él", "el", data_stress_clean$response) #I am changing the el with accent with the el without accent and without modifying the rest
-unique(data_stress_clean$response) #[1] "tu"       NA         "yo"       "el"       "ellos"    "nosotros"
+unique(data_stress_clean$response) #checking: "tu"       NA         "yo"       "el"       "ellos"    "nosotros"
 
-sum(is.na(data_stress_clean$response)) #????
+sum(is.na(data_stress_clean$response)) #double check
 ```
 ```{r}
 data_answers$answer <- ifelse(data_answers$answer == "eu", "tu", data_answers$answer)
 unique(data_answers$answer)
+nrow(data_answers) # 130
 ```
+#I am trying to find a merge key:
 ```{r}
-any(duplicated(data_answers$sentence)) #[1] TRUE
-nrow(data_answers) #[1] 130
-```
-```{r}
+count(data_answers, sentence)
+any(duplicated(data_answers$sentence)) # TRUE
 data_answers[duplicated(data_answers$sentence), ]
+
 ```
 
 ```{r}
