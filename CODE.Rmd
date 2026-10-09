@@ -681,7 +681,7 @@ tidy(ELP_cor) %>% select(estimate) #explanation on p101
 ```
 ##exercise ch5-guesstimate
 
-#Problem set 1
+#Problem Set 1
 ```{r}
 data_stress <- read_csv("PS1/data_stress.csv")
 data_answers <- read_csv("PS1/data_answers.csv")
@@ -690,6 +690,7 @@ glimpse(data_stress)
 ```
 ```{r}
 glimpse(data_answers)
+
 ```
 
 ##data_stress response
@@ -704,7 +705,7 @@ data_stress_clean
 nrow(data_stress_clean) #the number of rows is the same as in the instructions
 ```
 ```{r}
-length(unique(data_stress_clean$id)) #to chek the # of participants (38)
+length(unique(data_stress_clean$id)) #to check the # of participants (38)
 count(data_stress_clean, id) #all 38 participants have 80 trials
 ```
 
@@ -722,7 +723,7 @@ sum(is.na(data_stress_clean$response))  # to see # of trials with no response (8
 ```{r}
 filter(data_answers, answer == "eu") #so I am assuming there is a typo in the answer column and i will change eu into tu
 ```
-##Fixing matches-response&answer
+##fixing matches-response&answer
 ```{r}
 data_stress_clean <- data_stress %>%
   filter(screen == "response") %>%
@@ -745,7 +746,9 @@ head(data_stress_clean)  #response=participant's answer; type, tense, sentence, 
 head(data_answers)  #sentence, tense, type are shared; answer is what response is compared with
 head(data_stress_clean$sentence)  #weird sentences, poor key; filename in 'audio' is cleaner
 count(data_answers, sentence) #A sentence can appear twice. So sentence alone cannot be the only merge key
-subset(data_answers, sentence == "Aca lo invito")  # same sentence, different tense and answer: tense is needed
+
+data_answers %>%
+  filter(sentence == "Aca lo invito")  # same sentence, different tense and answer: tense is needed
 
 unique(data_stress_clean$type)  # distractor, target
 unique(data_answers$type)  # filler, target: labels differ, so type is not used as a key
@@ -761,7 +764,7 @@ head(unique(data_answers$`verb conjugation`), 20)  # accents are inconsistent
 
 ##filenames extraction
 ```{r}
-#Extracting sentences from audio column in data_stress
+#Extracting sentences from audio column in data_stress. This part was consulted with AI as I did not not how to separate filenames
 
 data_stress_clean <- data_stress_clean %>%
   mutate(sentence_clean = gsub(".*_", "", audio)) %>% # keep only what comes after the last underscore
@@ -885,12 +888,11 @@ range(data_proficiency_means$proficiency)
 count(data_proficiency_clean, id) %>% filter(n != 50)
 incomplete_ids <- c(15411133, 15423803)
 incomplete_ids
+
 data_proficiency_means <- data_proficiency_means %>%
   filter(!(id %in% incomplete_ids)) #keep all except incomplete ids
 nrow(data_proficiency_means) # 36 participants completed
 ```
-
-##remove incomplete ids
 
 ```{r}
 #removing 2 participants who did not finish the task from data_stress_means
