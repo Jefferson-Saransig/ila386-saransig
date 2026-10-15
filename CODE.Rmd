@@ -14,6 +14,7 @@ library(janitor)
 library(gridExtra)
 library(stringr) #is a package for working with text/strings
 library(broom)
+library(car)
 
 ```
 
@@ -946,3 +947,121 @@ The intercept (0.41153) represents the predicted mean score when proficiency is 
 
 **Finally, note that each participant contributes two mean scores to this model (one per item type). Briefly explain why that might be a problem for a linear model. We will return to this issue when we cover mixed-effects models.**
 Each participant contributes two observations (mean scores for each type), and those observations may be correlated because they come from the same participant. Therefore, the model may not take this relationship into account and may treat the two observations as independent of one another
+
+
+#Winter Ch 6
+
+```{r}
+icon <- read_csv('perry_winter_2017_iconicity.csv')
+icon %>% print(n = 4, width = Inf)
+```
+```{r}
+icon <- mutate(icon, Log10Freq = log10(Freq)) #log transformation
+icon_mdl <- lm(Iconicity ~ SER + CorteseImag + Syst + Log10Freq, data = icon)
+glance(icon_mdl)$r.squared
+```
+
+```{r}
+tidy(icon_mdl) %>% select(term, estimate)
+#Round the numeric coefficient estimates to 1 dec. place
+tidy(icon_mdl) %>% select(term, estimate) %>%
+mutate(estimate = round(estimate, 1)) 
+
+```
+```{r}
+range(icon$Syst, na.rm = TRUE)
+```
+
+```{r}
+#standardized (z-score) versions of each predictor
+icon <- mutate(icon,
+SER_z = scale(SER),
+CorteseImag_z = scale(CorteseImag),
+Syst_z = scale(Syst),
+Freq_z = scale(Log10Freq))
+#fitting a new lm
+icon_mdl_z <- lm(Iconicity ~ SER_z + CorteseImag_z +
+Syst_z + Freq_z, data = icon)
+glance(icon_mdl_z)$r.squared #checking the R2 value
+```
+```{r}
+#coefficients are represented in different units
+tidy(icon_mdl_z) %>% select(term, estimate) %>%
+mutate(estimate = round(estimate, 1)) #SER_z:For each increase in SER by 1 standard deviation (holding all other variables constant), iconicity increases by +0.5
+```
+```{r}
+#extractign residuals
+res <- residuals(icon_mdl_z)
+# Set graphical parameters to generate plot matrix:
+par(mfrow = c(1, 3))
+# Plot 1, histogram:
+hist(res)
+# Plot 2, Q-Q plot:
+qqnorm(res) ## Create the Q-Q plot
+qqline(res) # # Add the reference line
+# Plot 3, residual plot:
+plot(fitted(icon_mdl_z), res)
+```
+```{r}
+#good residual plots
+par(mfrow = c(3, 3)) # setup 3 X 3 plot matrix
+for (i in 1:9) plot(rnorm(50), rnorm(50))
+```
+```{r}
+#bad residual plots with non-constant variance
+par(mfrow = c(3, 3))
+for (i in 1:9) plot(1:50, (1:50) * rnorm(50))
+```
+
+```{r}
+#Collinearity
+set.seed(42) # seed value for random numbers
+x <- rnorm(50)
+y <- 10 + 3 * x + rnorm(50)
+tidy(lm(y ~ x)) #tidy:organizes the model results into a table
+
+```
+```{r}
+x2 <- x
+x2[50] <- -1
+cor(x, x2) #extreme correlation
+tidy(lm(y ~ x2))
+```
+
+```{r}
+xmdl_both <- lm(y ~ x + x2)
+tidy(xmdl_both)
+```
+
+```{r}
+vif(xmdl_both) #detects collinearity between predictors
+
+vif(icon_mdl_z) 
+glance(icon_mdl_z)
+```
+
+##Ch6. Ex 1
+```{r}
+elp_full <- read_csv("ELP_full_length_frequency.csv")
+head(elp_full)
+
+elp_mdl <- lm(RT ~ Log10Freq + length, data = elp_full)
+tidy(elp_mdl)
+summary(elp_mdl) 
+```
+```{r}
+#variace inflation factors
+vif(elp_mdl) #vif close to 1, good!
+```
+```{r}
+#normality and homoscedasticity assumptions
+
+res <- residuals(elp_mdl)
+
+par(mfrow = c(1, 3))
+hist(res)
+qqnorm(res)
+qqline(res)
+plot(fitted(elp_mdl), res) #scatterplot of model’s predicted values against its residuals
+```
+
