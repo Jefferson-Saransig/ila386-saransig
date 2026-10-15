@@ -1064,4 +1064,22 @@ qqnorm(res)
 qqline(res)
 plot(fitted(elp_mdl), res) #scatterplot of model’s predicted values against its residuals
 ```
+##class activity
+```{r}
+
+ggplot(elp_full, aes(x = Log10Freq, y = RT)) +
+  geom_point(alpha= 0.1) + #scatterplot 
+  #geom_jitter() +(This is another option)
+  geom_smooth(method = "lm")+ #, formula = y ~ x, color = "blue") +
+geom_smooth() #for a cursve line
+  #geom_smooth(method = "loess", color = "red", se = FALSE)
+```
+```{r}
+ggplot(elp_full, aes(x = length, y = RT)) +
+  geom_point(alpha= 0.1) + #scatterplot 
+  #geom_jitter() +(This is another option)
+  geom_smooth(method = "lm", linetype = "dashed")+
+geom_smooth() #for a cursve line
+  
+```
 
