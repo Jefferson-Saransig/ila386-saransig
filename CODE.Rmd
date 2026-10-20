@@ -965,11 +965,11 @@ glance(icon_mdl)$r.squared
 tidy(icon_mdl) %>% select(term, estimate)
 #Round the numeric coefficient estimates to 1 dec. place
 tidy(icon_mdl) %>% select(term, estimate) %>%
-mutate(estimate = round(estimate, 1)) 
+mutate(estimate = round(estimate, 1)) # Syst has very small values, so its coefficient looks large due to its scale
 
 ```
 ```{r}
-range(icon$Syst, na.rm = TRUE)
+range(icon$Syst, na.rm = TRUE) #na.rm = TRUE tells R to ignore missing values (NA) when performing a calculation.
 ```
 
 ```{r}
@@ -993,7 +993,8 @@ mutate(estimate = round(estimate, 1)) #SER_z:For each increase in SER by 1 stand
 #extractign residuals
 res <- residuals(icon_mdl_z)
 # Set graphical parameters to generate plot matrix:
-par(mfrow = c(1, 3))
+#Base R en lugar de ggplot:
+par(mfrow = c(1, 3)) #tells R to arrange multiple plots in one row with three columns
 # Plot 1, histogram:
 hist(res)
 # Plot 2, Q-Q plot:
@@ -1042,16 +1043,33 @@ glance(icon_mdl_z)
 
 ##Ch6. Ex 1
 ```{r}
-elp_full <- read_csv("ELP_full_length_frequency.csv")
-head(elp_full)
+elp_full <- read_csv("ELP_full_length_frequency.csv") %>%
+  rename_with(tolower) %>%
+  mutate(
+    freq_log10_z = as.numeric(scale(log10freq)),
+    length_z = as.numeric(scale(length))
+  )
 
-elp_mdl <- lm(RT ~ Log10Freq + length, data = elp_full)
+# Model 1: Original predictors
+elp_mdl <- lm(rt ~ log10freq + length, data = elp_full)
+
+# Model 2: Standardized predictors
+elp_mdl_z <- lm(rt ~ freq_log10_z + length_z, data = elp_full)
+
+# Results for Model 1
 tidy(elp_mdl)
-summary(elp_mdl) 
+
+# Results for Model 2
+tidy(elp_mdl_z)
+
+glance(elp_mdl)
+glance(elp_mdl_z)
+
 ```
 ```{r}
 #variace inflation factors
 vif(elp_mdl) #vif close to 1, good!
+vif(elp_mdl_z)
 ```
 ```{r}
 #normality and homoscedasticity assumptions
@@ -1063,6 +1081,15 @@ hist(res)
 qqnorm(res)
 qqline(res)
 plot(fitted(elp_mdl), res) #scatterplot of model’s predicted values against its residuals
+plot(elp_mdl)
+#Z model
+res <- residuals(elp_mdl_z)
+
+par(mfrow = c(1, 3))
+hist(res)
+qqnorm(res)
+qqline(res)
+plot(fitted(elp_mdl_z), res) #scatterplot of model’s predicted values against its residuals
 ```
 ##class activity
 ```{r}
