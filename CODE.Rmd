@@ -1109,4 +1109,9 @@ ggplot(elp_full, aes(x = length, y = RT)) +
 geom_smooth() #for a cursve line
   
 ```
+#Winter CH 7
+```{r}
+senses <- read_csv('winter_2016_senses_valence.csv')
+senses
+```
 
