@@ -1113,5 +1113,161 @@ geom_smooth() #for a cursve line
 ```{r}
 senses <- read_csv('winter_2016_senses_valence.csv')
 senses
+table(senses$'Modality')
+range(senses$Val, na.rm = TRUE)
+mean(senses$Val, na.rm = TRUE)
+sd(senses$Val, na.rm = TRUE)
+hist(senses$Val)
+```
+
+```{r}
+chem <- filter(senses, Modality %in% c('Taste', 'Smell')) #subset tibble
+table(chem$Modality)
+chem %>% group_by(Modality) %>%
+summarize(M = mean(Val), SD = sd(Val))
+```
+
+```{r}
+chem %>% ggplot(aes(x = Modality, y = Val, fill = Modality)) +
+geom_boxplot() + theme_minimal() +
+scale_fill_brewer(palette = 'PuOr') #palette for the boxplot fill colors
+```
+```{r}
+#density graph
+chem %>% ggplot(aes(x = Val, fill = Modality)) +
+geom_density(alpha = 0.5)
+scale_fill_brewer(palette = 'PuOr')
+```
+```{r}
+#regression model: valence as a function of modality
+chem_mdl <- lm(Val ~ Modality, data = chem)
+tidy(chem_mdl) %>% select(term, estimate)
+head(fitted(chem_mdl)) #it predicts the average valence for each category, not each word
+```
+```{r}
+#predictions
+chem_preds <- tibble(Modality = unique(chem$Modality))
+unique(chem$Modality)
+chem_preds$fit <- predict(chem_mdl, chem_preds) # Predict average valence for each modality
+chem_preds
+```
+```{r}
+#dummy coding
+chem <- mutate(chem,
+Mod01 = ifelse(Modality == 'Taste', 1, 0))
+select(chem, Modality, Mod01)
+lm(Val ~ Mod01, data = chem)
+```
+```{r}
+#changing the reference level
+chem <- mutate(chem,
+Modality = factor(Modality),
+ModRe = relevel(Modality, ref = 'Taste'))
+levels(chem$Modality)
+levels(chem$ModRe) #releveled factor; 'taste' reference cat
+#model with ModRe predictor
+lm(Val ~ ModRe, data = chem) %>%
+tidy %>%
+select(term, estimate)
+```
+```{r}
+#sum-coding in R
+chem <- mutate(chem, Modality = factor(Modality))
+# Check:
+class(chem$Modality) == 'factor'
+
+# Check the default coding (Smell = 0, Taste = 1)
+contrasts(chem$Modality)
+
+# Treatment coding: first category = 0, second = 1
+contr.treatment(2)
+
+# sum coding for two categories (+1 and -1)
+contr.sum(2)
+
+#regression model
+chem <- mutate(chem, ModSum = Modality) #copy of Modality column
+contrasts(chem$ModSum) <- contr.sum(2)
+lm(Val ~ ModSum, data = chem) %>% # Fit the model using sum coding
+  tidy() %>%
+  select(term, estimate)
+#mean of means
+chem %>% group_by(Modality) %>%
+summarize(MeanVal = mean(Val)) %>%
+summarize(MeanOfMeans = mean(MeanVal))
+```
+```{r}
+#more than 2 levels
+unique(senses$Modality)
+sense_all <- lm(Val ~ Modality, data = senses)
+tidy(sense_all) %>% select(term:estimate) %>%
+mutate(estimate = round(estimate, 2))
+
+#predicting mean valence
+# Get the unique modalities and sort them alphabetically
+sense_preds <- tibble(
+  Modality = sort(unique(senses$Modality))
+)
+# Calculate the predicted valence for each modality
+sense_preds$fit <- round(
+  predict(sense_all, sense_preds), 2
+)
+sense_preds
+```
+
+```{r}
+#Assumptions
+par(mfrow = c(1, 3))
+# Plot 1, histogram:
+hist(residuals(sense_all), col = 'skyblue2')
+# Plot 2, Q-Q plot:
+qqnorm(residuals(sense_all))
+qqline(residuals(sense_all))
+# Plot 3, residual plot:
+plot(fitted(sense_all), residuals(sense_all))
+```
+#Ch 7 Exercises
+## 7.12.1
+```{r}
+senses %>% ggplot(aes(x = Modality, y = Val, fill = Modality)) +
+geom_boxplot() + theme_minimal() +
+scale_fill_brewer(palette = 'PuOr')
+```
+```{r}
+senses %>% ggplot(aes(x = Val, fill = Modality)) +
+geom_density(alpha = 0.7)  + facet_wrap(~Modality) +
+scale_fill_brewer(palette = 'PuOr') 
+```
+##7.12.2
+```{r}
+lyn <- read_csv('lynott_connell_2009_modality.csv')
+icon <- read_csv('perry_winter_2017_iconicity.csv')
+both <- left_join(lyn, icon)
+both <- select(both, Word, DominantModality, Iconicity)
+both
+unique(both$DominantModality) #"Haptic"    "Visual"    "Gustatory" "Olfactory" "Auditory" 
+#model
+both_mdl <- lm(Iconicity ~ DominantModality, data = both)
+tidy(both_mdl) %>% select(term:estimate) %>%
+mutate(estimate = round(estimate, 2)) #Descriptive means; the intercept is the mean iconicity for words in the Auditory category; Each coefficient is how much that category's mean differs from Auditory mean. Adding each coefficient to the intercept gives the predicted mean for that category.
+
+
+#deriving predictions
+#head(fitted(both_mdl))
+both_preds <- tibble(DominantModality = unique(both$DominantModality))
+both_preds$fit <- predict(both_mdl, both_preds) #calculates the predicted iconicity for each modality
+both_preds
+#descriptive means
+both %>%
+  group_by(DominantModality) %>%
+  summarize(MeanIconicity = mean(Iconicity, na.rm = TRUE))
+
+#Comparison
+both_means <- both %>%
+  group_by(DominantModality) %>%
+  summarize(MeanIconicity = mean(Iconicity, na.rm = TRUE))
+
+left_join(both_preds, both_means, by = "DominantModality")
+
 ```
 
