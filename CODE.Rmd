@@ -1135,7 +1135,7 @@ scale_fill_brewer(palette = 'PuOr') #palette for the boxplot fill colors
 ```{r}
 #density graph
 chem %>% ggplot(aes(x = Val, fill = Modality)) +
-geom_density(alpha = 0.5)
+geom_density(alpha = 0.5) +
 scale_fill_brewer(palette = 'PuOr')
 ```
 ```{r}
@@ -1226,7 +1226,7 @@ qqline(residuals(sense_all))
 # Plot 3, residual plot:
 plot(fitted(sense_all), residuals(sense_all))
 ```
-#Ch 7 Exercises
+##Ch 7 Exercises
 ## 7.12.1
 ```{r}
 senses %>% ggplot(aes(x = Modality, y = Val, fill = Modality)) +
@@ -1269,5 +1269,70 @@ both_means <- both %>%
 
 left_join(both_preds, both_means, by = "DominantModality")
 
+```
+
+#Winter CH 8
+```{r}
+icon <- read_csv('perry_winter_2017_iconicity.csv')
+icon
+unique(icon$POS)
+sort(table(icon$POS))
+NV <- filter(icon, POS %in% c('Noun', 'Verb'))
+table(NV$POS)
+```
+
+```{r}
+#model without interaction
+NV_mdl <- lm(Iconicity ~ SER + POS, data = NV)
+tidy(NV_mdl) %>% select(term, estimate)
+# model with interaction (SER*POS)
+NV_int_mdl <- lm(Iconicity ~ SER * POS, data = NV)
+tidy(NV_int_mdl) %>% select(term, estimate)
+
+```
+```{r}
+# Center SER:
+NV <- mutate(NV, SER_c = SER - mean(SER, na.rm = TRUE))
+# Fit model with centered predictor:
+NV_int_mdl_c <- lm(Iconicity ~ SER_c * POS, data = NV)
+# Check coefficients:
+tidy(NV_int_mdl_c) %>% select(term, estimate)
+```
+##categorical*cateorical interactions
+```{r}
+sim <- read_csv('winter_matlock_2013_similarity.csv')
+sim
+sim %>% count(Phon, Sem)
+sum(is.na(sim$Distance)) #1 missing value in distance column
+sim <- filter(sim, !is.na(Distance)) #to exclude the data point
+nrow(sim)
+range(sim$Distance)
+```
+```{r}
+#model without interactions
+sim_mdl <- lm(Distance ~ Phon + Sem, data = sim)
+tidy(sim_mdl) %>% select(term, estimate)
+#model with interaction
+sim_mdl_int <- lm(Distance ~ Phon * Sem, data = sim)
+tidy(sim_mdl_int) %>% select(term, estimate)
+```
+```{r}
+# Create 'different, different, similar, similar':
+Phon <- rep(c('Different', 'Similar'), each = 2)
+Phon
+# Create 'different, similar, different, similar':
+Sem <- rep(c('Different', 'Similar'), times = 2)
+Sem
+#above we created 2 vectors, with which we will create a tibble below
+newdata <- tibble(Phon, Sem)
+newdata
+```
+```{r}
+# Append predictions to tibble:
+newdata$fit <- predict(sim_mdl_int, newdata)
+newdata
+#using the predictions to compute avarages
+newdata %>% group_by(Sem) %>%
+summarize(distM = mean(fit)) #the model predicts that, in the semantically similar condition, participants drew the cities 10mm closer to each other. See similar x distM slot
 ```
 
