@@ -1331,8 +1331,53 @@ newdata
 # Append predictions to tibble:
 newdata$fit <- predict(sim_mdl_int, newdata)
 newdata
-#using the predictions to compute avarages
+#using the predictions to compute avarages, Ex: what is the average difference between the semantically similar and semantically different conditions?
 newdata %>% group_by(Sem) %>%
 summarize(distM = mean(fit)) #the model predicts that, in the semantically similar condition, participants drew the cities 10mm closer to each other. See similar x distM slot
+```
+```{r}
+# Convert predictors to factors:
+sim <- mutate(sim,
+Phon_sum = factor(Phon),
+Sem_sum = factor(Sem))
+# Change contrast coding scheme to sum coding:
+contrasts(sim$Phon_sum) <- contr.sum(2)
+contrasts(sim$Sem_sum) <- contr.sum(2)
+# Refit model with sum-coded predictors:
+sum_mdl <- lm(Distance ~ Phon_sum * Sem_sum, data = sim)
+tidy(sum_mdl) %>% select(term, estimate)
+```
+##continuous*continuous interaction
+```{r}
+lonely <- read_csv('sidhu&pexman_2017_iconicity.csv')
+lonely
+lonely <- filter(lonely, Iconicity >= 0) #exclude words with low iconocity
+lonely_mdl <- lm(Iconicity ~ SER * ARC, data = lonely) #model with SER and ARC as predictors+their interaction
+tidy(lonely_mdl) %>% select(term, estimate)
+```
+```{r}
+# Standardize continuous predictors:
+lonely <- mutate(lonely,
+SER_z = (SER - mean(SER)) / sd(SER),
+ARC_z = (ARC - mean(ARC)) / sd(ARC))
+lonely
+# Fit model with standardized predictors:
+lonely_mdl_z <- lm( Iconicity ~ SER_z * ARC_z,
+data = lonely)
+tidy(lonely_mdl_z) %>% select(term, estimate)
+```
+##nonlinear effects
+```{r}
+vinson_yelp <- read_csv('vinson_dale_2014_yelp.csv')
+vinson_yelp
+```
+
+```{r}
+vinson_yelp %>% group_by(stars) %>%
+summarize(AUI_mean = mean(across_uni_info)) %>%
+ggplot(aes(x = stars, y = AUI_mean)) +
+geom_line(linetype = 2) +
+geom_point(size = 3) +
+theme_minimal() #it shows that more strongly negative or more strongly positive reviews contain more unpredictable words.
 ```
 
