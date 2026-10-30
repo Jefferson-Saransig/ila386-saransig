@@ -1380,4 +1380,39 @@ geom_line(linetype = 2) +
 geom_point(size = 3) +
 theme_minimal() #it shows that more strongly negative or more strongly positive reviews contain more unpredictable words.
 ```
+```{r}
+x <- -10:10
+plot(x, x ^ 2, type = 'b')
+```
+```{r}
+x <- -10:10
+plot(x, x ^ 3, type = 'b')
+```
+```{r}
+# Center and square star ratings:
+vinson_yelp <- mutate(vinson_yelp,
+stars_c = stars - mean(stars),
+stars_c2 = stars_c ^ 2)
+
+yelp_mdl <- lm(across_uni_info ~ stars_c + stars_c2,
+data = vinson_yelp)
+tidy(yelp_mdl) %>% select(term:estimate)
+```
+```{r}
+# Create tibble for predict():
+yelp_preds <- tibble(stars_c =
+sort(unique(vinson_yelp$stars_c))) #Create a tibble with the observed star ratings
+# Square star ratings:
+yelp_preds <- mutate(yelp_preds, stars_c2 = stars_c ^ 2)
+# Append model fit:
+yelp_preds$fit <- predict(yelp_mdl, yelp_preds)
+yelp_preds
+```
+```{r}
+yelp_preds %>%
+ggplot(aes(x = stars_c, y = fit)) +
+geom_point(size = 3) +
+geom_line(linetype = 2) +
+theme_minimal()
+```
 
