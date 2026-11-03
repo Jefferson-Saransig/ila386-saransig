@@ -15,6 +15,7 @@ library(gridExtra)
 library(stringr) #is a package for working with text/strings
 library(broom)
 library(car)
+library(effsize)
 
 ```
 
@@ -1414,5 +1415,47 @@ ggplot(aes(x = stars_c, y = fit)) +
 geom_point(size = 3) +
 geom_line(linetype = 2) +
 theme_minimal()
+```
+#Winter CH 9
+```{r}
+chem <- read_csv('winter_2016_senses_valence.csv') %>%
+filter(Modality %in% c('Taste', 'Smell'))
+chem %>% print(n = 4)
+cohen.d(Val ~ Modality, data = chem)
+```
+```{r}
+# Correlate the points [1,2] and [2, 3]:
+x <- c(1, 2) # create x-values
+y <- c(2, 3) # create y-values
+# Perform correlation:
+cor(x, y) #A large effect size can occur in a tiny sample. It does not automatically mean that the finding is reliable or generalizable to the population
+```
+##Ch 9 exercises
+```{r}
+# Number of data points:
+n <- 40
+# Random y:
+y <- c(rnorm(n, mean = 5, sd = 1),
+rnorm(n, mean = 2, sd = 1))
+# Levels for x predictor:
+x <- rep(c('A', 'B'), eac= n)
+# Combine:
+df <- tibble(x, y)
+# Calculate Cohen's d:
+cohen.d(y ~ x, df)
+```
+```{r}
+#Exercise 2: Gauging Intuitions About r
+x <- rnorm(50)
+y <- 3 * x + rnorm(50, sd = 3) # slope = 3
+plot(x, y, main = cor(x, y))
+```
+```{r}
+#Exercise 3: Gauging Intuitions About t and Significance
+# Set values:
+n <- 10; meandiff <- 2; my_sd <- 2
+# Perform t-test:
+t.test( rnorm(n, sd = my_sd),
+rnorm(n, sd = my_sd) + meandiff)
 ```
 
