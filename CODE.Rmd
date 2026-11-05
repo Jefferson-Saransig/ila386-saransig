@@ -1458,4 +1458,32 @@ n <- 10; meandiff <- 2; my_sd <- 2
 t.test( rnorm(n, sd = my_sd),
 rnorm(n, sd = my_sd) + meandiff)
 ```
+#Winter CH 10
+```{r}
+#type I error (false positive)
+set.seed(42) # set random number seed
+t.test(rnorm(10), rnorm(10)) # output not shown
+t.test(rnorm(10), rnorm(10)) # output not shown
+t.test(rnorm(10), rnorm(10)) # output not shown
+t.test(rnorm(10), rnorm(10)) # p < 0.05
+
+#type II error (false negative)
+set.seed(42)
+t.test(rnorm(10, mean = 1), rnorm(10, mean = 0))
+t.test(rnorm(10, mean = 1), rnorm(10, mean = 0))
+t.test(rnorm(10, mean = 1), rnorm(10, mean = 0))
+```
+##Multiple testing
+```{r}
+1 - (1 - 0.05) ^ 1 #1=single test. the result 0.05 is the probability of making at least one Type I error. so it is very low probability--good!--
+
+1 - (1 - 0.05) ^ 2
+1 - (1 - 0.05) ^ 20
+
+p.adjust(0.03, method = 'bonferroni', n = 2) # the original p=0.03 is adjusted for bettre understanding
+```
+##Ch 10 Exercises
+```{r}
+p.adjust(0.001, method = 'bonferroni', n = 100)
+```
 
