@@ -1513,6 +1513,7 @@ run_ttest(reps = 100, n = 10, my_sd = 2, meandiff = 2) %>%
   count(significant)
 ```
 #Winter CH 11
+##11.2
 ```{r}
 icon <- read_csv('perry_winter_2017_iconicity.csv')
 icon %>% print(n = 4)
@@ -1663,5 +1664,118 @@ ggplot(aes(x = Modality, y = fit)) +
 geom_point() +
 geom_errorbar(aes(ymin = lwr, ymax = upr)) +
 theme_minimal()
+```
+```{r}
+# Extract ascending order:
+sense_order <- arrange(sense_preds, fit)$Modality
+# Set factor to this order:
+sense_preds <- mutate(sense_preds,
+Modality = factor(Modality,
+levels = sense_order))
+
+#Cosmetic improvements to the first plot:
+sense_preds %>%
+ggplot(aes(x = Modality, y = fit)) +
+geom_point(size = 4) +
+geom_errorbar(aes(ymin = lwr, ymax = upr),
+size = 1, width = 0.5) +
+ylab('Predicted emotional valence\n') +
+xlab('\nModality') +
+theme_minimal() +
+theme(axis.text.x =
+element_text(face = 'bold', size = 15),
+axis.text.y =
+element_text(face = 'bold', size = 15),
+axis.title =
+element_text(face = 'bold', size = 20))
+```
+##11.6
+```{r}
+ELP <- read_csv('ELP_frequency.csv')
+# Log-transform frequency predictor:
+ELP <- mutate(ELP, Log10Freq = log10(Freq))
+ELP
+
+# Create linear model:
+ELP_mdl <- lm(RT ~ Log10Freq, ELP)
+
+#generating predictions: 
+newdata <- tibble(Log10Freq = seq(0, 5, 0.01)) #seq: to have more points for drawing a smoother prediction line
+
+preds <- predict(ELP_mdl, newdata,
+interval = 'confidence')
+head(preds)
+
+preds <- cbind(newdata, preds)
+head(preds)
+```
+```{r}
+preds %>% ggplot(aes(x = Log10Freq, y = fit)) +
+geom_ribbon(aes(ymin = lwr, ymax = upr),
+fill = 'grey', alpha = 0.5) +
+geom_line() +
+geom_text(data = ELP, aes(y = RT, label = Word)) +
+theme_minimal()
+```
+
+##Exercise 11.8
+```{r}
+# Fit model:
+icon_mdl <- lm(Iconicity ~ SER + CorteseImag +
+Syst + Freq, data = icon)
+# Look at coefficient table:
+tidy(icon_mdl) %>%
+mutate(p.value = format.pval(p.value, 4),
+estimate = round(estimate, 2),
+std.error = round(std.error, 2),
+statistic = round(statistic, 2))
+```
+
+```{r}
+mycoefs <- tidy(icon_mdl, conf.int = TRUE) %>%
+filter(term != '(Intercept)')
+
+mycoefs %>% ggplot(aes(x = term, y = estimate)) +
+geom_point() +
+geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
+width = 0.2) +
+geom_hline(yintercept = 0, linetype = 2) +
+coord_flip() + theme_minimal()
+
+# Sort tibble by estimate and extract order of terms:
+pred_order <- arrange(mycoefs, estimate)$term
+pred_order
+# Set predictor names as factor levels to control their display order in the plot.
+mycoefs <- mutate(mycoefs, 
+term = factor(term, levels = pred_order))
+
+#running the ggplot again
+mycoefs %>% ggplot(aes(x = term, y = estimate)) +
+geom_point() +
+geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
+width = 0.2) +
+geom_hline(yintercept = 0, linetype = 2) +
+coord_flip() + theme_minimal()
+```
+
+```{r}
+#SAME AS ABOVE BUT SHORTER
+# Fit unstandardized model
+icon_mdl <- lm(Iconicity ~ SER + CorteseImag +
+                 Syst + Freq, data = icon)
+
+# Extract coefficients and confidence intervals
+mycoefs <- tidy(icon_mdl, conf.int = TRUE) %>%
+  filter(term != '(Intercept)')
+
+# Plot coefficients
+mycoefs %>%
+  ggplot(aes(x = term, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
+                width = 0.2) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  coord_flip() +
+  theme_minimal()
 ```
 
