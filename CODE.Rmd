@@ -1447,7 +1447,7 @@ cohen.d(y ~ x, df)
 ```{r}
 #Exercise 2: Gauging Intuitions About r
 x <- rnorm(50)
-y <- 3 * x + rnorm(50, sd = 3) # slope = 3
+y <- 3 * x + rnorm(50, sd = 3) # slope = 3 #rnorm(50, sd = 3) introduces error
 plot(x, y, main = cor(x, y))
 ```
 ```{r}
@@ -1485,5 +1485,183 @@ p.adjust(0.03, method = 'bonferroni', n = 2) # the original p=0.03 is adjusted f
 ##Ch 10 Exercises
 ```{r}
 p.adjust(0.001, method = 'bonferroni', n = 100)
+```
+##Charlie's
+
+```{r}
+# write a simple function to run this repeatedly
+run_ttest <- function(reps, n, my_sd, meandiff) {
+  results <- data.frame(t = numeric(reps), p = numeric(reps))
+
+  for (i in 1:reps) {
+    test <- t.test(
+      rnorm(n, sd = my_sd),
+      rnorm(n, sd = my_sd) + meandiff
+    )
+    results$t[i] <- test$statistic
+    results$p[i] <- test$p.value
+  }
+
+  results
+}
+
+# run it with Winter's values
+run_ttest(reps = 100, n = 10, my_sd = 2, meandiff = 2) %>%
+  mutate(
+    significant = ifelse(p < .05, "yes", "no")
+  ) %>%
+  count(significant)
+```
+#Winter CH 11
+```{r}
+icon <- read_csv('perry_winter_2017_iconicity.csv')
+icon %>% print(n = 4)
+```
+```{r}
+# Standardize predictors:
+icon <- mutate(icon,
+SER_z = scale(SER),
+CorteseImag_z = scale(CorteseImag),
+Syst_z = scale(Syst),
+Freq_z = scale(Freq))
+# Fit model:
+icon_mdl_z <- lm(Iconicity ~ SER_z + CorteseImag_z +
+Syst_z + Freq_z, data = icon)
+# Look at coefficient table:
+tidy(icon_mdl_z) %>%
+mutate(p.value = format.pval(p.value, 4),
+estimate = round(estimate, 2),
+std.error = round(std.error, 2),
+statistic = round(statistic, 2))
+```
+
+```{r}
+mycoefs <- tidy(icon_mdl_z, conf.int = TRUE) %>%
+filter(term != '(Intercept)')
+
+mycoefs %>% ggplot(aes(x = term, y = estimate)) +
+geom_point() +
+geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
+width = 0.2) +
+geom_hline(yintercept = 0, linetype = 2) +
+coord_flip() + theme_minimal()
+
+# Sort tibble by estimate and extract order of terms:
+pred_order <- arrange(mycoefs, estimate)$term
+pred_order
+# Set predictor names as factor levels to control their display order in the plot.
+mycoefs <- mutate(mycoefs, 
+term = factor(term, levels = pred_order))
+
+#running the ggplot again
+mycoefs %>% ggplot(aes(x = term, y = estimate)) +
+geom_point() +
+geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
+width = 0.2) +
+geom_hline(yintercept = 0, linetype = 2) +
+coord_flip() + theme_minimal()
+
+```
+## 11.3
+```{r}
+senses <- read_csv('winter_2016_senses_valence.csv')
+senses %>% print(n = 4)
+```
+```{r}
+senses_mdl <- lm(Val ~ Modality, data = senses)
+
+tidy(senses_mdl) %>%
+mutate(estimate = round(estimate, 2),
+std.error = round(std.error, 2),
+statistic = round(statistic, 2),
+p.value = format.pval(p.value, 4)) #in the coefficient output, the reference value is 'sight'
+```
+```{r}
+# Null model: predicts overall mean Val, without Modality.
+#With this model, we're establishing a baseline: how well can we predict valence using only the overall mean, without considering sensory modality. The null model assumes that sensory modality makes no difference. It predicts the same overall mean valence for every observation.
+senses_null <- lm(Val ~ 1, data = senses)
+
+# Perform model comparison: 
+
+anova(senses_null, senses_mdl)
+
+glance(senses_mdl)
+```
+```{r}
+#pairwise comparisons
+#install.packages('emmeans')
+library(emmeans)
+emmeans(senses_mdl, list(pairwise ~ Modality),
+adjust = 'bonferroni')
+```
+##11.4
+```{r}
+# Standardize valence and take the absolute value:
+senses <- mutate(senses,
+Val_z = scale(Val),
+AbsVal = abs(Val_z))
+# Omnibus test:
+abs_mdl <- lm(AbsVal ~ Modality, data = senses)
+# Model comparison without specifying null model directly:
+anova(abs_mdl)
+```
+```{r}
+# Create taste/smell vs. sight/sound/touch predictor:
+chems <- c('Taste', 'Smell')
+senses <- mutate(senses,
+ChemVsRest = ifelse(Modality %in% chems,
+'Chem', 'Other'))
+
+with(senses, table(Modality, ChemVsRest))
+
+
+# Test this predictor:
+abs_mdl <- lm(AbsVal ~ ChemVsRest, data = senses) 
+tidy(abs_mdl)
+```
+##11.5
+```{r}
+newpreds <- tibble(Modality =
+sort(unique(senses$Modality)))
+# Check:
+newpreds
+
+# Generate predictions:
+fits <- predict(senses_mdl, newpreds)
+fits
+
+# Standard errors for predictions:
+SEs <- predict(senses_mdl, newpreds,
+se.fit = TRUE)$se.fit
+SEs
+```
+```{r}
+#fits and their SEs in the same table:
+CI_tib <- tibble(fits, SEs)
+CI_tib
+
+# Compute CIs by hand:
+CI_tib <- mutate(CI_tib, # en lugar de CI_tib estuvo 'sense_preds' y no corria
+LB = fits - 1.96 * SEs, # lower bound
+UB = fits + 1.96 * SEs) # upper bound
+CI_tib
+
+#compute the CIs with argument (here the name is sense_preds and not CI_tib):
+sense_preds <- predict(senses_mdl, newpreds,
+interval = 'confidence')
+sense_preds
+```
+```{r}
+# Combine modality labels with predicted means and confidence intervals.
+sense_preds <- cbind(newpreds, sense_preds)
+sense_preds
+
+```
+```{r}
+sense_preds %>%
+ggplot(aes(x = Modality, y = fit)) +
+geom_point() +
+geom_errorbar(aes(ymin = lwr, ymax = upr)) +
+theme_minimal()
 ```
 
