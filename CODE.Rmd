@@ -1857,6 +1857,7 @@ ges <- read_csv('hassemer_winter_2016_gesture.csv')
 ges
 
 table(ges$pinkie_curl)
+
 table(ges$choice)
 #proportion
 table(ges$choice) / sum(table(ges$choice)) 
@@ -1937,5 +1938,17 @@ tidy(ges_mdl2)
 xtab_index <- table(ges$index_curve, ges$choice)
 xtab_index #index-finger curvature has a strong positive association with choosing shape
 prop.table(xtab_index, 1) #Proportion of shape and height responses within each index-curl value
+```
+##ex 12.8.3
+```{r}
+ges <- ges %>%
+  mutate(pinkie_curl_c2 = pinkie_curl_c^2)
+
+ges_mdl3 <- glm(choice ~ pinkie_curl_c + pinkie_curl_c2,
+                data = ges,
+                family = "binomial")
+
+tidy(ges_mdl3) #p-value: 0.0000124
+#-0.0933:the probability of choosing a shape gesture decreases more sharply at higher pinkie-curl values.
 ```
 
