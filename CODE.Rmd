@@ -1779,3 +1779,163 @@ mycoefs %>%
   theme_minimal()
 ```
 
+#Winter CH 12
+```{r}
+#applying logistic function; # Transforms any real number into a probability between 0 and 1. Used in logistic regression to convert linear predictions into probabilities.
+plogis(-2)
+plogis(0)
+plogis(16)
+```
+```{r}
+alcohol <- read_csv('speech_errors.csv')
+alcohol
+#logistic regression model (glm)
+alcohol_mdl <- glm(speech_error ~ BAC,
+data = alcohol, family = 'binomial')
+
+#coefficient table
+tidy(alcohol_mdl)
+
+#extracting coefficients
+
+intercept <- tidy(alcohol_mdl)$estimate[1]
+slope <- tidy(alcohol_mdl)$estimate[2]
+intercept
+slope
+```
+```{r}
+#calculating the predicted log-odds of making a speech error
+intercept + slope * 0 # BAC = 0
+intercept + slope * 0.3 # BAC = 0.3
+
+#to get predicted probabilities
+plogis(intercept + slope * 0)
+
+plogis(intercept + slope * 0.3)
+```
+```{r}
+BAC_vals <- seq(0, 0.4, 0.01)
+
+#Calculate predicted probabilities for each BAC value, convert predicted log-odds into probabilities
+y_preds <- plogis(intercept + slope * BAC_vals)
+
+# tibble
+mdl_preds <- tibble(BAC_vals, y_preds)
+mdl_preds
+```
+```{r}
+ggplot(alcohol, aes(x = BAC, y = speech_error)) +
+geom_point(size = 4, alpha = 0.6) +
+geom_line(data = mdl_preds,
+aes(x = BAC_vals, y = y_preds)) +
+theme_minimal()
+```
+##12.5
+```{r}
+install.packages("languageR")
+library(languageR)
+
+head(dative, 2)
+table(dative$RealizationOfRecipient) #NP=double object construction, pp=prep dative
+dative_mdl <- glm(RealizationOfRecipient ~ AnimacyOfRec,
+data = dative, family = 'binomial')
+tidy(dative_mdl)
+
+#Check the categories and their order in the outcome variable
+levels(dative$RealizationOfRecipient)
+```
+```{r}
+#probabilities of log odds
+intercept <- tidy(dative_mdl)$estimate[1]
+slope <- tidy(dative_mdl)$estimate[2]
+plogis(intercept + slope * 0) #0=animate, 1=inanimate
+plogis(intercept + slope * 1)
+```
+##12.6
+```{r}
+ges <- read_csv('hassemer_winter_2016_gesture.csv')
+ges
+
+table(ges$pinkie_curl)
+table(ges$choice)
+#proportion
+table(ges$choice) / sum(table(ges$choice)) 
+prop.table(table(ges$choice))
+
+#cross-tabulate
+xtab <- table(ges$pinkie_curl, ges$choice)
+xtab
+
+#row-wise proportions
+xtab / rowSums(xtab) #option 1
+round(prop.table(xtab, 1), digits = 2) #option 2
+```
+```{r}
+ges_mdl <- glm(choice ~ pinkie_curl, data = ges) # error (without binomial)
+ges_mdl <- glm(choice ~ pinkie_curl,
+data = ges, family = 'binomial') # error ('choice'is coded as a character vector)
+
+# Convert to factor and check:
+ges <- mutate(ges, choice = factor(choice))
+class(ges$choice)
+levels(ges$choice)
+
+ges_mdl <- glm(choice ~ pinkie_curl, data = ges,
+family = 'binomial')
+tidy(ges_mdl)
+```
+```{r}
+#generating predictions for all pinkie curl values
+ges_preds <- tibble(pinkie_curl = 1:9)
+predict(ges_mdl, ges_preds)
+
+#probabilities
+plogis(predict(ges_mdl, ges_preds)) #8 and 9 are less than 0.5 (negative)
+```
+
+```{r}
+# Calculate predicted log-odds and their standard errors
+# [1:2] extracts the fit and se.fit components
+ges_preds <- as_tibble(predict(ges_mdl,
+ges_preds,
+se.fit = TRUE)[1:2]) %>%
+mutate(prob = plogis(fit),
+LB = plogis(fit - 1.96 * se.fit),
+UB = plogis(fit + 1.96 * se.fit)) %>%
+bind_cols(ges_preds)
+ges_preds
+
+```
+```{r}
+ges_preds %>% ggplot(aes(x = pinkie_curl, y = prob)) +
+geom_point(size = 3) +
+geom_errorbar(aes(ymin = LB, ymax = UB), width = 0.5) +
+scale_x_continuous(breaks = 1:9) +
+xlab('Pinkie curl') +
+ylab('p(y = Shape)') +
+theme_minimal()
+```
+##exercise 12.8.1
+```{r}
+ges <- ges %>%
+  mutate(pinkie_curl_c = pinkie_curl - mean(pinkie_curl))
+mean(ges$pinkie_curl_c) #basically 0
+
+ges_mdl_c <- glm(choice ~ pinkie_curl_c, data = ges,
+family = 'binomial')
+tidy(ges_mdl)
+tidy(ges_mdl_c) #intercept: predicted log-odds of choosing shape at the average pinkie-curl value.
+plogis(tidy(ges_mdl_c)$estimate[1]) #probability, [1] selects the intercept
+```
+##ex 12.8.2
+```{r}
+ges_mdl2 <- glm(choice ~ pinkie_curl + index_curve,
+                data = ges,
+                family = "binomial")
+tidy(ges_mdl2)
+
+xtab_index <- table(ges$index_curve, ges$choice)
+xtab_index #index-finger curvature has a strong positive association with choosing shape
+prop.table(xtab_index, 1) #Proportion of shape and height responses within each index-curl value
+```
+
