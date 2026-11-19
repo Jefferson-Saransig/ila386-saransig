@@ -1925,8 +1925,10 @@ mean(ges$pinkie_curl_c) #basically 0
 ges_mdl_c <- glm(choice ~ pinkie_curl_c, data = ges,
 family = 'binomial')
 tidy(ges_mdl)
-tidy(ges_mdl_c) #intercept: predicted log-odds of choosing shape at the average pinkie-curl value.
+tidy(ges_mdl_c) #intercept: predicted log-odds of choosing shape at the average pinkie-curl value. The pinkie_curl is the same
 plogis(tidy(ges_mdl_c)$estimate[1]) #probability, [1] selects the intercept
+
+#pinkie_curl_c = pinkie_curl - 1: this is to have the intercept to 1 in the pinkie curl
 ```
 ##ex 12.8.2
 ```{r}
@@ -1950,5 +1952,8 @@ ges_mdl3 <- glm(choice ~ pinkie_curl_c + pinkie_curl_c2,
 
 tidy(ges_mdl3) #p-value: 0.0000124
 #-0.0933:the probability of choosing a shape gesture decreases more sharply at higher pinkie-curl values.
+
+#the model is not correct because they are in different scales. See charlie's
+
 ```
 
