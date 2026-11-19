@@ -1957,3 +1957,68 @@ tidy(ges_mdl3) #p-value: 0.0000124
 
 ```
 
+#PS2
+```{r}
+ps2 <- read_csv("PS2/data.csv")
+#188 part `Participant Private ID`
+unique(ps2$`Participant Private ID`) #188 in total
+unique(ps2$`Task Name`) #[1] "Volume Check" "AX Discrimination Task (Custom Build)" [3] "Identification_word" "Identification_pronoun" [5] "Lexical Stress Spanish Lextale"  NA   
+unique(ps2$`Manipulation: Spreadsheet`) #[1] "Spreadsheet1" "lexical stress-ax" "identification-word" [4] "identification-pronoun" "sp" NA   
+unique(ps2$`Spreadsheet Name`) #[1] NA "Spreadsheet1"   "lexical stress-ax" [4] "identification-word" "identification-pronoun" "sp" 
+unique(ps2$Response) # [1] NA "AUDIO PLAY REQUESTED" "BEGIN"  [4] "audio started" "audio finished" "different" [7] "same" "END" "past"  [10] "present"  "cross.png" "tick.png" [13] "timeout"             
+unique(ps2$Correct) #NA, 1, 0
+unique(ps2$display) #[1] NA  "Sound Check" "instructions1" "trial" "instructions2" [6] "end"           "instructions"  "main" 
+unique(ps2$`Response Type...61`) #[1] NA         "info"     "continue" "timedOut" "response"
+unique(ps2$Tag) #[1] NA         "response" "timeout" 
+unique(ps2$`Component Name`) #[1] NA "Click To Continue" "Time Limit" "Audio Clip" [5] "Click Response"  
+unique(ps2$`Object Name`) # [1] NA  "Continue Button" "Start" "screen" [5] "Audio Clip"      "different" "same" "audio" [9] "past"  "present"  "Response"    
+unique(ps2$`Spreadsheet: tense`) #[1] NA        "past"    "present"
+#lo siguiente creo que es proficiency
+unique(ps2$`Spreadsheet: trial_type`) #[1] NA               "practice"       "critical_trial" "instructions"  
+unique(ps2$`Spreadsheet: item`)
+unique(ps2$`Spreadsheet: match_type`) #[1] NA   "BA" "BB" "AB" "AA"
+unique(ps2$`Spreadsheet: signal`) #[1] NA          "different" "same" 
+unique(ps2$`Spreadsheet: ANSWER`) #[1] NA          "cross.png" "tick.png" 
+unique(ps2$`Spreadsheet: targetresponse`) #[1] NA     "word" "non" 
+
+
+```
+
+
+```{r}
+ps2_clean <- ps2 %>%
+  filter(
+    `Task Name` != "Volume Check",
+    `Response Type...61` == "response",
+    display %in% c("trial", "main")
+  )
+ps2_clean %>%
+  count(`Task Name`) #cuantos hay en total
+ps2_clean %>%
+  count(`Task Name`, Correct)
+
+ps2_clean %>%
+  count(`Task Name`, `Spreadsheet: trial_type`)
+```
+
+```{r}
+#removing practice trials from the listening-tasks
+
+ps2_clean <- ps2 %>%
+  filter(
+    `Task Name` != "Volume Check",
+    `Response Type...61` == "response",
+    (
+      (`Task Name` %in% c(
+        "AX Discrimination Task (Custom Build)",
+        "Identification_pronoun",
+        "Identification_word"
+      ) & `Spreadsheet: trial_type` == "critical_trial") |
+      `Task Name` == "Lexical Stress Spanish Lextale"
+    )
+  )
+
+ps2_clean %>%
+  count(`Task Name`)
+```
+
