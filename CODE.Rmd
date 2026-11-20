@@ -1975,7 +1975,7 @@ unique(ps2$`Object Name`) # [1] NA  "Continue Button" "Start" "screen" [5] "Audi
 unique(ps2$`Spreadsheet: tense`) #[1] NA        "past"    "present"
 #lo siguiente creo que es proficiency
 unique(ps2$`Spreadsheet: trial_type`) #[1] NA               "practice"       "critical_trial" "instructions"  
-unique(ps2$`Spreadsheet: item`)
+unique(ps2$`Spreadsheet: item`) #words and nonwords
 unique(ps2$`Spreadsheet: match_type`) #[1] NA   "BA" "BB" "AB" "AA"
 unique(ps2$`Spreadsheet: signal`) #[1] NA          "different" "same" 
 unique(ps2$`Spreadsheet: ANSWER`) #[1] NA          "cross.png" "tick.png" 
@@ -1994,6 +1994,7 @@ ps2_clean <- ps2 %>%
   )
 ps2_clean %>%
   count(`Task Name`) #cuantos hay en total
+
 ps2_clean %>%
   count(`Task Name`, Correct)
 
@@ -2007,18 +2008,266 @@ ps2_clean %>%
 ps2_clean <- ps2 %>%
   filter(
     `Task Name` != "Volume Check",
-    `Response Type...61` == "response",
-    (
-      (`Task Name` %in% c(
-        "AX Discrimination Task (Custom Build)",
-        "Identification_pronoun",
-        "Identification_word"
-      ) & `Spreadsheet: trial_type` == "critical_trial") |
-      `Task Name` == "Lexical Stress Spanish Lextale"
-    )
+    `Response Type...61` == "response"
+  ) %>%
+  filter(
+    `Task Name` == "Lexical Stress Spanish Lextale" |
+    `Spreadsheet: trial_type` == "critical_trial"
   )
 
 ps2_clean %>%
   count(`Task Name`)
+
+# dataset containing only the three listening tasks.
+# LexTALE will be analyzed separately as a proficiency measure.
+
+listening_data <- ps2_clean %>%
+  filter(`Task Name` != "Lexical Stress Spanish Lextale")
+listening_data
+```
+```{r}
+# 6. Select relevant columns
+# Keep participant ID, task, response accuracy, and task-specific information needed for the analysis.
+
+listening_data <- listening_data %>%
+  select(
+    participant = `Participant Private ID`,
+    task = `Task Name`,
+    response = Response,
+    correct = Correct,
+    item = `Spreadsheet: item`,
+    tense = `Spreadsheet: tense`,
+    match_type = `Spreadsheet: match_type`,
+    signal = `Spreadsheet: signal`
+  ) %>%
+  mutate(
+    participant = factor(participant),
+    task = factor(task)
+  )
+
+glimpse(listening_data)
+```
+```{r}
+#Display missing values by column
+
+colSums(is.na(listening_data)) #item has all values missing, so remove it below
+
+listening_data <- listening_data %>%
+  select(-item)
+
+# 10. Calculate overall task performance
+# Group observations by task and calculate accuracy.
+
+task_performance <- listening_data %>%
+  group_by(task) %>%
+  summarise(
+    total_trials = n(),
+    correct_responses = sum(correct == 1),
+    incorrect_responses = sum(correct == 0),
+    accuracy = mean(correct)
+  )
+
+task_performance
+```
+```{r}
+# 11. Calculate performance for each participant in each task
+# This allows us to examine individual differences in accuracy.
+
+participant_performance <- listening_data %>%
+  group_by(participant, task) %>%
+  summarise(
+    total_trials = n(),
+    correct_responses = sum(correct == 1),
+    accuracy = mean(correct),
+    .groups = "drop"
+  )
+participant_performance
+
+# 11a. Summarize participant-level accuracy by task
+# Calculate the mean and standard deviation across participants.
+
+participant_performance %>%
+  group_by(task) %>%
+  summarise(
+    mean_accuracy = mean(accuracy),
+    sd_accuracy = sd(accuracy)
+  )
+```
+
+```{r}
+#ESTE CHUNK SE PODRIA BORRAR
+# 12. Verify AX response accuracy
+# Compare participant responses with the target signal.
+
+listening_data %>%
+  filter(task == "AX Discrimination Task (Custom Build)") %>%
+  count(response, signal, correct)
+
+# Verify identification task accuracy
+
+listening_data %>%
+  filter(task %in% c("Identification_pronoun", "Identification_word")) %>%
+  count(task, response, tense, correct)
+
+
+# 13. Understanding response and accuracy variables
+#
+# AX Discrimination:
+# - response: participant's answer (same/different)
+# - signal: target answer (same/different)
+#
+# Identification tasks:
+# - response: participant's answer (past/present)
+# - tense: target answer (past/present)
+#
+# All tasks:
+# - correct = 1: correct response
+# - correct = 0: incorrect response or timeout
+#
+# Accuracy was verified by comparing participant responses
+# against the corresponding target answers.
+
+```
+```{r}
+# 14. Visualize participant accuracy
+# Compare the distribution of individual accuracy scores
+# across the three listening tasks.
+
+ggplot(participant_performance,
+       aes(x = task, y = accuracy)) +
+  geom_boxplot() +
+  labs(
+    x = "Listening task",
+    y = "Accuracy",
+    title = "Participant accuracy across listening tasks"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# 16. Count participants in each task
+
+participant_performance %>%
+  group_by(task) %>%
+  summarise(
+    n_participants = n_distinct(participant)
+  )
+    
+# 16a. Count how many listening tasks each participant completed
+
+participant_performance %>%
+  group_by(participant) %>%
+  summarise(
+    n_tasks = n_distinct(task),
+    .groups = "drop"
+  ) %>%
+  count(n_tasks)
+
+```
+```{r}
+# 17. Reshape participant performance
+# Create one row per participant, with a separate accuracy
+# column for each listening task.
+
+performance_wide <- participant_performance %>%
+  select(participant, task, accuracy) %>%
+  pivot_wider(
+    names_from = task,
+    values_from = accuracy
+  ) # pivot_wider() takes the values in task and turns them into separate columns
+glimpse(performance_wide)
+```
+```{r}
+# 17. Descriptive plot 1: Performance across tasks
+# Each point/observation represents a participant's accuracy.
+# Boxplots show the distribution of accuracy across participants.
+
+ggplot(participant_performance,
+       aes(x = task, y = accuracy)) +
+  geom_boxplot() +
+  labs(
+    x = "Task",
+    y = "Accuracy",
+    title = "Participant performance across listening tasks"
+  ) +
+  theme_minimal()
+```
+##lextale
+```{r}
+# 18. Separate LexTALE data
+# Keep only actual LexTALE responses.
+
+lextale_data <- ps2_clean %>%
+  filter(`Task Name` == "Lexical Stress Spanish Lextale")
+# 19. Verify LexTALE response accuracy
+# Compare the participant's selected response with the target response.
+
+lextale_data %>%
+  count(
+    Response,
+    `Spreadsheet: targetresponse`,
+    Correct
+  )
+
+# 20. Calculate LexTALE proficiency scores
+# Each participant's score is the proportion of correct responses.
+
+lextale_scores <- lextale_data %>%
+  group_by(`Participant Private ID`) %>%
+  summarise(
+    total_trials = n(),
+    correct_responses = sum(Correct == 1),
+    proficiency = mean(Correct),
+    .groups = "drop"
+  ) %>%
+  rename(participant = `Participant Private ID`) %>%
+  mutate(participant = factor(participant))
+
+summary(lextale_scores$proficiency)
+
+# 21. Combine listening performance and LexTALE scores
+# Match participants across the two datasets using participant ID.
+
+performance_proficiency <- participant_performance %>%
+  left_join(
+    lextale_scores %>% select(participant, proficiency),
+    by = "participant"
+  )
+
+# 21a. Check whether all participants have proficiency scores
+
+performance_proficiency %>%
+  summarise(
+    total_observations = n(),
+    missing_proficiency = sum(is.na(proficiency))
+  )
+```
+```{r}
+# 22. Descriptive plot 2: Proficiency and listening performance
+# Each point represents one participant's accuracy in one task.
+# The regression lines show the relationship within each task.
+
+ggplot(performance_proficiency,
+       aes(x = proficiency, y = accuracy)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = TRUE) +
+  facet_wrap(~ task) +
+  labs(
+    x = "LexTALE proficiency score",
+    y = "Listening task accuracy",
+    title = "Relationship between proficiency and task performance"
+  ) +
+  theme_minimal()
+```
+##linear model
+```{r}
+# 24. Fit the linear model
+
+model_lm <- lm(
+  accuracy ~ proficiency * task,
+  data = performance_proficiency
+)
+
+summary(model_lm)
 ```
 
