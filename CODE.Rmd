@@ -16,6 +16,9 @@ library(stringr) #is a package for working with text/strings
 library(broom)
 library(car)
 library(effsize)
+library(lme4)
+library(afex)
+library(MuMIn)
 
 ```
 
@@ -1956,6 +1959,188 @@ tidy(ges_mdl3) #p-value: 0.0000124
 #the model is not correct because they are in different scales. See charlie's
 
 ```
+#Winter CH 15
+
+```{r}
+# Set seed value to make your examples match the book:
+set.seed(666)
+ppt_ids <- gl(6, 20)
+# Check:
+ppt_ids
+
+# Create 20 item identifiers:
+it_ids <- gl(20, 1)
+# Check:
+it_ids
+
+it_ids <- rep(it_ids, 6)
+it_ids
+
+length(ppt_ids) # 6 participants, each responds to 20 items
+length(it_ids) # 20 items, each for 6 participants
+
+# 20 random numbers, rounded:
+logfreqs <- round(rexp(20) * 5, 2)
+logfreqs
+
+# Repeat frequency predictor 6 times:
+logfreqs <- rep(logfreqs, 6)
+# Check length:
+length(logfreqs)
+
+# Check content:
+logfreqs
+# Put predictors together:
+xdata <- tibble( ppt = ppt_ids, item = it_ids,
+freq = logfreqs)
+xdata
+
+xdata$int <- 300
+
+# Generate varying intercepts for participants:
+ppt_ints <- rnorm(6, sd = 40)
+# Check:
+ppt_ints
+
+xdata$ppt_ints <- rep(ppt_ints, each = 20)
+xdata
+
+# Generate 20 varying intercepts for items:
+item_ints <- rnorm(20, sd = 20)
+# Check content:
+item_ints
+
+# Repeat item intercepts for six participants:
+item_ints <- rep(item_ints, times = 6)
+# Check that length matches:
+length(item_ints)
+
+# Add to tibble:
+xdata$item_ints <- item_ints
+
+xdata$error <- rnorm(120, sd = 20)
+
+xdata$effect <- (-5) * xdata$freq
+# Check:
+xdata %>% head(4)
+
+xdata <- mutate(xdata,
+dur = int + ppt_ints + item_ints +
+error + effect)
+# Check:
+xdata %>% head(4)
+
+
+xreal <- select(xdata, -(int:effect))
+xreal
+```
+##15.3
+
+```{r}
+xmdl <- lmer(dur ~ freq + (1|ppt) + (1|item),
+data = xreal, REML = FALSE)
+summary(xmdl)
+```
+##15.4 extracting info out of lme4 objects
+```{r}
+fixef(xmdl)
+fixef(xmdl)[2] # extract slope
+summary(xmdl)$coefficients
+coef(xmdl)
+```
+##15.5 messing up the model
+
+```{r}
+# Fit model that drops important item-varying intercepts:
+xmdl_bad <- lmer(dur ~ freq + (1|ppt),
+data = xreal, REML = FALSE)
+# Check output:
+summary(xmdl_bad)
+```
+```{r}
+# Fit model with frequency slope:
+xmdl_slope <- lmer(dur ~ freq + (1 + freq|ppt) + (1|item),
+data = xreal, REML = FALSE)
+
+summary(xmdl_slope)$varcor
+
+coef(xmdl_slope)$ppt
+
+#de-correlated random effects structure
+xmdl_slope_nocorr <- lmer(dur ~ freq +
+(1|ppt) + (1|item) +
+(0 + freq|ppt),
+data = xreal, REML = FALSE)
+
+summary(xmdl_slope_nocorr)$varcor #freq sd could not be estimated=0
+
+coef(xmdl_slope_nocorr)$ppt
+```
+##15.6 
+```{r}
+#Poisson distribution = used for count data (0, 1, 2, 3...). Lambda (\(\lambda\)) represents the expected average count. Poisson regression models how predictors influence the expected count.
+
+xmdl_nofreq <- lmer(dur ~ 1 + (1|ppt) + (1|item),
+data = xreal, REML = FALSE)
+
+anova(xmdl_nofreq, xmdl, test = 'Chisq') #model with freq is better, see pvalue and df
+
+
+```
+```{r}
+# Full model:
+x_REML <- lmer(dur ~ freq + (1|ppt) + (1|item),
+data = xreal, REML = TRUE)
+# Reduced model (no item-varying intercepts):
+x_red <- lmer(dur ~ freq + (1|ppt),
+data = xreal, REML = TRUE)
+
+anova(x_red, x_REML, test = 'Chisq', refit = FALSE)
+
+xmdl_afex <- mixed(dur ~ freq + (1|ppt) + (1|item),
+data = xreal, method = 'LRT')
+
+xmdl_afex
+
+fixef(xmdl_afex$full_model)
+```
+##15.7.1-2
+```{r}
+r.squaredGLMM(xmdl_afex$full_model)
+
+#15.7.2 predicitons for mixed models
+
+xvals <- seq(0, 18, 0.01)
+yvals <- fixef(xmdl_afex$full_model)[1] +
+  fixef(xmdl_afex$full_model)[2] * xvals
+head(yvals)
+```
+##15.8
+
+```{r}
+
+selfie <- read_csv('ruth_page_selfies.csv')
+selfie
+
+selfie <- mutate(selfie, UglyCat = factor(UglyCat))
+
+ugly_mdl <- glmer(UglyCat ~ Angle +
+(1 + Angle|ID), data = selfie,
+family = 'binomial')
+#to find an optimizer that works:
+allFit(ugly_mdl) # abbreviated output:
+
+ugly_mdl <- glmer(UglyCat ~ Angle +
+(1 + Angle|ID), data = selfie,
+family = 'binomial',
+control =
+glmerControl(optimizer = 'bobyqa'))
+summary(ugly_mdl)
+
+```
+```{r}
+levels(selfie$UglyCat)
+```
 
 #PS2
 ```{r}
@@ -2234,6 +2419,7 @@ performance_proficiency <- participant_performance %>%
     by = "participant"
   )
 
+performance_proficiency
 # 21a. Check whether all participants have proficiency scores
 
 performance_proficiency %>%
@@ -2307,12 +2493,13 @@ par(mfrow = c(1, 1))
 # Check multicollinearity
 car::vif(model_lm) #the gvif are good, they are close to 1. There is no problematic multicolinearity
 
+
 # Compare linear and smoothed relationships
 ggplot(performance_proficiency,
        aes(x = proficiency, y = accuracy)) +
   geom_point(alpha = 0.4) +
-  stat_smooth(method = "lm", linetype = "dashed") +
-  stat_smooth() +
+  geom_smooth(method = "lm", linetype = "dashed") +
+  geom_smooth() +
   facet_wrap(~ task) +
   theme_minimal()
 ```
