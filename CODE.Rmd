@@ -2142,9 +2142,9 @@ summary(ugly_mdl)
 levels(selfie$UglyCat)
 ```
 
-#PS2
+#My notes
 ```{r}
-ps2 <- read_csv("PS2/data.csv")
+
 #188 part `Participant Private ID`
 unique(ps2$`Participant Private ID`) #188 in total
 unique(ps2$`Task Name`) #[1] "Volume Check" "AX Discrimination Task (Custom Build)" [3] "Identification_word" "Identification_pronoun" [5] "Lexical Stress Spanish Lextale"  NA   
@@ -2170,6 +2170,7 @@ unique(ps2$`Spreadsheet: targetresponse`) #[1] NA     "word" "non"
 #PROBLEM SET 2
 ##data wrangling
 ```{r}
+ps2 <- read_csv("PS2/data.csv")
 ps2_clean <- ps2 %>%
   filter(
     `Task Name` != "Volume Check",
@@ -2209,8 +2210,7 @@ listening_data <- ps2_clean %>%
 listening_data
 ```
 ```{r}
-# Select relevant columns
-# Keep participant ID, task, response accuracy, and task-specific information needed for the analysis.
+# Keeping participant ID, task, response accuracy, and task-specific information needed for the analysis.
 
 listening_data <- listening_data %>%
   select(
@@ -2231,15 +2231,14 @@ listening_data <- listening_data %>%
 glimpse(listening_data)
 ```
 ```{r}
-#Display missing values by column
+#Displaying missing values by column
 
 colSums(is.na(listening_data)) #item has all values missing, so remove it below
 
 listening_data <- listening_data %>%
   select(-item)
 
-# 10. Calculate overall task performance
-# Group observations by task and calculate accuracy.
+# Calculating overall task performance. Group observations by task and calculate accuracy.
 
 task_performance <- listening_data %>%
   group_by(task) %>%
@@ -2253,7 +2252,7 @@ task_performance <- listening_data %>%
 task_performance
 ```
 ```{r}
-# Calculate performance for each participant in each task
+# Calculating performance for each participant in each task
 # This is to examine individual differences in accuracy.
 
 participant_performance <- listening_data %>%
@@ -2266,8 +2265,8 @@ participant_performance <- listening_data %>%
   )
 participant_performance
 
-# Summarize participant-level accuracy by task
-# Calculate the mean and standard deviation across participants.
+# Summarizing participant-level accuracy by task
+# Calculating the mean and SD across participants
 
 participant_performance %>%
   group_by(task) %>%
@@ -2277,7 +2276,7 @@ participant_performance %>%
   )
 
 # Verify AX response accuracy
-# Compare participant responses with the target signal.
+# Comparing participant responses with the target signal.
 
 listening_data %>%
   filter(task == "AX Discrimination Task (Custom Build)") %>%
@@ -2347,30 +2346,15 @@ participant_performance %>%
   count(n_tasks)
 
 ```
-```{r}
-#MAYBE CHUNCK IS OPTIONAL
-# Reshape participant performance
-# Create one row per participant, with a separate accuracy
-# column for each listening task.
-
-performance_wide <- participant_performance %>%
-  select(participant, task, accuracy) %>%
-  pivot_wider(
-    names_from = task,
-    values_from = accuracy
-  ) # pivot_wider() takes the values in task and turns them into separate columns
-glimpse(performance_wide)
-```
-
 ##lextale
 ```{r}
-# Separate LexTALE data.this keeps only LexTALE responses
+# this keeps only LexTALE responses
 
 lextale_data <- ps2_clean %>%
   filter(`Task Name` == "Lexical Stress Spanish Lextale")
 
 # Verify LexTALE response accuracy
-# Compare the participant's selected response with the target response.
+# Comparing the participant's response with the target response.
 
 lextale_data %>%
   count(
@@ -2379,7 +2363,7 @@ lextale_data %>%
     Correct
   )
 
-# Calculate LexTALE proficiency scores. Each participant's score is the proportion of correct responses.
+# Calculating LexTALE proficiency scores. Each participant's score is the proportion of correct responses.
 
 lextale_scores <- lextale_data %>%
   group_by(`Participant Private ID`) %>%
@@ -2394,7 +2378,7 @@ lextale_scores <- lextale_data %>%
 
 summary(lextale_scores$proficiency)
 
-# Combine listening performance and LexTALE scores. Match participants across the two datasets using participant ID.
+# Combining listening performance and LexTALE scores. Match participants across the two datasets using participant ID.
 
 performance_proficiency <- participant_performance %>%
   left_join(
@@ -2404,7 +2388,18 @@ performance_proficiency <- participant_performance %>%
 
 performance_proficiency
 
-# Check whether all participants have proficiency scores
+# Adding proficiency scores to listening data. This is for the gmler
+
+listening_data <- listening_data %>%
+  left_join(
+    lextale_scores %>% select(participant, proficiency),
+    by = "participant"
+  ) %>%
+  mutate(
+    proficiency_c = proficiency - mean(proficiency)
+  )
+
+# Checking whether all participants have proficiency scores
 
 performance_proficiency %>%
   summarise(
@@ -2449,10 +2444,10 @@ summary(model_lm)
 ```
 ##model assumptions
 ```{r}
-# Extract residuals from the linear model
+# Extracting residuals from the linear model
 res <- residuals(model_lm)
 
-# Set graphical parameters for three plots
+# Setting graphical parameters for three plots
 par(mfrow = c(1, 3))
 
 # Plot 1: Histogram of residuals
