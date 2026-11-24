@@ -2165,11 +2165,10 @@ unique(ps2$`Spreadsheet: match_type`) #[1] NA   "BA" "BB" "AB" "AA"
 unique(ps2$`Spreadsheet: signal`) #[1] NA          "different" "same" 
 unique(ps2$`Spreadsheet: ANSWER`) #[1] NA          "cross.png" "tick.png" 
 unique(ps2$`Spreadsheet: targetresponse`) #[1] NA     "word" "non" 
-
-
 ```
 
-
+#PROBLEM SET 2
+##data wrangling
 ```{r}
 ps2_clean <- ps2 %>%
   filter(
@@ -2203,15 +2202,14 @@ ps2_clean <- ps2 %>%
 ps2_clean %>%
   count(`Task Name`)
 
-# dataset containing only the three listening tasks.
-# LexTALE will be analyzed separately as a proficiency measure.
+# data set containing only the three listening tasks. LexTALE will be analyzed separately as a proficiency measure.
 
 listening_data <- ps2_clean %>%
   filter(`Task Name` != "Lexical Stress Spanish Lextale")
 listening_data
 ```
 ```{r}
-# 6. Select relevant columns
+# Select relevant columns
 # Keep participant ID, task, response accuracy, and task-specific information needed for the analysis.
 
 listening_data <- listening_data %>%
@@ -2255,8 +2253,8 @@ task_performance <- listening_data %>%
 task_performance
 ```
 ```{r}
-# 11. Calculate performance for each participant in each task
-# This allows us to examine individual differences in accuracy.
+# Calculate performance for each participant in each task
+# This is to examine individual differences in accuracy.
 
 participant_performance <- listening_data %>%
   group_by(participant, task) %>%
@@ -2268,7 +2266,7 @@ participant_performance <- listening_data %>%
   )
 participant_performance
 
-# 11a. Summarize participant-level accuracy by task
+# Summarize participant-level accuracy by task
 # Calculate the mean and standard deviation across participants.
 
 participant_performance %>%
@@ -2277,11 +2275,8 @@ participant_performance %>%
     mean_accuracy = mean(accuracy),
     sd_accuracy = sd(accuracy)
   )
-```
 
-```{r}
-#ESTE CHUNK SE PODRIA BORRAR
-# 12. Verify AX response accuracy
+# Verify AX response accuracy
 # Compare participant responses with the target signal.
 
 listening_data %>%
@@ -2293,6 +2288,10 @@ listening_data %>%
 listening_data %>%
   filter(task %in% c("Identification_pronoun", "Identification_word")) %>%
   count(task, response, tense, correct)
+```
+
+```{r}
+
 
 
 # 13. Understanding response and accuracy variables
@@ -2314,23 +2313,22 @@ listening_data %>%
 
 ```
 ```{r}
-# 14. Visualize participant accuracy
-# Compare the distribution of individual accuracy scores
-# across the three listening tasks.
+# Descriptive plot 1: Performance across tasks
+# Each point/observation represents a participant's accuracy.
+# Boxplots show the distribution of accuracy across participants.
 
 ggplot(participant_performance,
        aes(x = task, y = accuracy)) +
   geom_boxplot() +
   labs(
     x = "Listening task",
-    y = "Accuracy",
-    title = "Participant accuracy across listening tasks"
+    y = "Accuracy"
   ) +
   theme_minimal()
 ```
 
 ```{r}
-# 16. Count participants in each task
+# Count participants in each task
 
 participant_performance %>%
   group_by(task) %>%
@@ -2338,7 +2336,7 @@ participant_performance %>%
     n_participants = n_distinct(participant)
   )
     
-# 16a. Count how many listening tasks each participant completed
+# Count how many listening tasks each participant completed
 
 participant_performance %>%
   group_by(participant) %>%
@@ -2350,7 +2348,8 @@ participant_performance %>%
 
 ```
 ```{r}
-# 17. Reshape participant performance
+#MAYBE CHUNCK IS OPTIONAL
+# Reshape participant performance
 # Create one row per participant, with a separate accuracy
 # column for each listening task.
 
@@ -2362,29 +2361,15 @@ performance_wide <- participant_performance %>%
   ) # pivot_wider() takes the values in task and turns them into separate columns
 glimpse(performance_wide)
 ```
-```{r}
-# 17. Descriptive plot 1: Performance across tasks
-# Each point/observation represents a participant's accuracy.
-# Boxplots show the distribution of accuracy across participants.
 
-ggplot(participant_performance,
-       aes(x = task, y = accuracy)) +
-  geom_boxplot() +
-  labs(
-    x = "Task",
-    y = "Accuracy",
-    title = "Participant performance across listening tasks"
-  ) +
-  theme_minimal()
-```
 ##lextale
 ```{r}
-# 18. Separate LexTALE data
-# Keep only actual LexTALE responses.
+# Separate LexTALE data.this keeps only LexTALE responses
 
 lextale_data <- ps2_clean %>%
   filter(`Task Name` == "Lexical Stress Spanish Lextale")
-# 19. Verify LexTALE response accuracy
+
+# Verify LexTALE response accuracy
 # Compare the participant's selected response with the target response.
 
 lextale_data %>%
@@ -2394,8 +2379,7 @@ lextale_data %>%
     Correct
   )
 
-# 20. Calculate LexTALE proficiency scores
-# Each participant's score is the proportion of correct responses.
+# Calculate LexTALE proficiency scores. Each participant's score is the proportion of correct responses.
 
 lextale_scores <- lextale_data %>%
   group_by(`Participant Private ID`) %>%
@@ -2410,8 +2394,7 @@ lextale_scores <- lextale_data %>%
 
 summary(lextale_scores$proficiency)
 
-# 21. Combine listening performance and LexTALE scores
-# Match participants across the two datasets using participant ID.
+# Combine listening performance and LexTALE scores. Match participants across the two datasets using participant ID.
 
 performance_proficiency <- participant_performance %>%
   left_join(
@@ -2420,7 +2403,8 @@ performance_proficiency <- participant_performance %>%
   )
 
 performance_proficiency
-# 21a. Check whether all participants have proficiency scores
+
+# Check whether all participants have proficiency scores
 
 performance_proficiency %>%
   summarise(
@@ -2429,9 +2413,9 @@ performance_proficiency %>%
   )
 ```
 ```{r}
-# 22. Descriptive plot 2: Proficiency and listening performance
-# Each point represents one participant's accuracy in one task.
-# The regression lines show the relationship within each task.
+# Descriptive plot 2: Proficiency and listening performance
+# Each point represents one participant's accuracy in one task
+# The regression lines show the relationship within each task
 
 ggplot(performance_proficiency,
        aes(x = proficiency, y = accuracy)) +
@@ -2447,14 +2431,14 @@ ggplot(performance_proficiency,
 ```
 ##linear model
 ```{r}
-# 25. Center proficiency
+# Center proficiency
 
 performance_proficiency <- performance_proficiency %>%
   mutate(
     proficiency_c = proficiency - mean(proficiency)
   )
 
-# 26. Fit the linear model
+# Fit the linear model
 
 model_lm <- lm(
   accuracy ~ proficiency_c * task,
@@ -2486,12 +2470,14 @@ plot(fitted(model_lm), res,
      ylab = "Residuals")
 abline(h = 0, lty = 2)
 
-# Restore the plotting layout
+# Restore to 1 plot at a time
 par(mfrow = c(1, 1))
 ```
+
+
 ```{r}
-# Check multicollinearity
-car::vif(model_lm) #the gvif are good, they are close to 1. There is no problematic multicolinearity
+# Check collinearity
+car::vif(model_lm) #the gvif are good, they are close to 1. There is no problematic colinearity. I used AI to understand the output here because GVIF was not mentioned in the textbook
 
 
 # Compare linear and smoothed relationships
@@ -2500,15 +2486,51 @@ ggplot(performance_proficiency,
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", linetype = "dashed") +
   geom_smooth() +
-  facet_wrap(~ task) +
+  facet_wrap(~ task) + 
   theme_minimal()
 ```
-### Linear Model: Assumption Checks and Results
+## Linear Model: Assumption Checks and Results
 
-The model showed no significant relationship between proficiency and AX accuracy (p = .796). The interactions between proficiency and task were also not significant (Identification Pronoun: p = .279; Identification Word: p = .258). However, Identification Word accuracy was significantly higher than AX accuracy at average proficiency (p = .00153).
+The model showed no significant relationship between proficiency and AX accuracy (p= 0.796). The interactions between proficiency and task were also not significant (Identification Pronoun: p= 0.279; Identification Word: p= 0.258). However, Identification Word accuracy was significantly higher than AX accuracy at average proficiency (p = 0.00153).
 
-I then checked the model assumptions. The histogram showed an approximately bell-shaped distribution of residuals, and most points in the Q-Q plot followed the diagonal line, suggesting that normality was reasonably satisfied. The residual plots did not show an obvious major problem with homoscedasticity. The adjusted GVIF values ranged from 1.00 to 1.73, indicating no problematic multicollinearity.
+Then I checked the model assumptions. The histogram showed an approximately bell-shaped distribution of residuals, and most points in the Q-Q plot followed the diagonal line,which suggests that normality was reasonably satisfied. The residual plots did not show a major problem with homoscedasticity. The adjusted GVIF values ranged from 1.00 to 1.73, indicating no problematic collinearity.
 
-Finally, comparing the linear and smoothed relationships suggested possible nonlinearity in the AX Discrimination and Identification Pronoun tasks. The Identification Word task showed a more linear pattern.
+Finally, the linear and smoothed relationships suggested possible nonlinearity in the AX Discrimination and Identification Pronoun tasks. The Identification Word task showed a more linear pattern.
 
-Overall, the model showed some limitations in capturing the relationship between proficiency and accuracy. Additionally, it does not account for the repeated observations from each participant, meaning that the independence assumption may be violated.
+Overall, I think the model showed some limitations in capturing the relationship between proficiency and accuracy. Additionally, it does not account for the repeated observations from each participant.
+
+##Logistic Mixed-Effects Model
+```{r}
+#Check the distribution of correct and incorrect responses
+table(listening_data$correct)
+
+#Logistic mixed-effects model
+model_glmer <- glmer(
+  correct ~ proficiency_c * task +
+    (1 | participant),
+  data = listening_data,
+  family = binomial
+)
+
+summary(model_glmer)
+
+#These are notes for myself:
+
+#(Intercept)	What is the predicted accuracy for AX at average proficiency?
+#proficiency_c	Is proficiency related to accuracy in AX?
+#taskIdentification_pronoun	Does accuracy in the pronoun task differ from AX at average proficiency?
+#taskIdentification_word	Does accuracy in the word task differ from AX at average proficiency?
+#proficiency_c:taskIdentification_pronoun	Does the relationship between proficiency and accuracy differ between the pronoun task and AX?
+#proficiency_c:taskIdentification_word	Does the relationship between proficiency and accuracy differ between the word task and AX?
+```
+##model assumptions
+```{r}
+model_glmer@optinfo$conv #0 and NULL show no convergence warnings
+isSingular(model_glmer) # Check for singular fit (FALSE = no singular fit detected, which is good). This part was done with AI to understand the output
+```
+##interpretation of the output
+The model includes proficiency, task and their interactions as fixed effects, with a random intercept for participant that account for individual differences and repeated observations. The table of Fixed effects shows that proficiency was not significantly associated with accuracy in the AX discrimination task (0.112, p value= 0.795). Regarding task differences, performance in the pronoun identification task did not significantly differ from AX performance (-0.007, p value= 0.842). However, performance in the word identification task was higher than in AX (0.126, p < 0.001) at average proficiency. Regarding the interactions, neither proficiency and the pronoun task (0.661, p= 0.244) nor the interaction between proficiency and the word task (0.706, p= 0.216) were statistically significant. These results suggest that although word identification performance was higher than AX performance, there is no sufficient evidence that the relationship between proficiency and accuracy differed across tasks.
+
+##Comparison of models
+
+Both model produced similar results. In both approaches, word identification performance was significantly higher than AX discrimination performance, while the pronoun identification task did not significantly differ from AX. Also, neither model found a significant relationship between proficiency and accuracy in the reference task (AX). Additionally, there were not significant interactions between proficiency and task. To conclude, both model gave me similar conclusions, but the logistic mixed-effects model seem to be better suited to the binary data because it accounts for individual differences between participants and the repeated observation for each particpant. 
