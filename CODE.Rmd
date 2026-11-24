@@ -2290,11 +2290,8 @@ listening_data %>%
 ```
 
 ```{r}
+# notes to myself:
 
-
-
-# 13. Understanding response and accuracy variables
-#
 # AX Discrimination:
 # - response: participant's answer (same/different)
 # - signal: target answer (same/different)
@@ -2302,14 +2299,6 @@ listening_data %>%
 # Identification tasks:
 # - response: participant's answer (past/present)
 # - tense: target answer (past/present)
-#
-# All tasks:
-# - correct = 1: correct response
-# - correct = 0: incorrect response or timeout
-#
-# Accuracy was verified by comparing participant responses
-# against the corresponding target answers.
-
 ```
 ```{r}
 # Descriptive plot 1: Performance across tasks
@@ -2472,7 +2461,7 @@ par(mfrow = c(1, 1))
 
 ```{r}
 # Check collinearity
-car::vif(model_lm) #the gvif are good, they are close to 1. There is no problematic colinearity. I used AI to understand the output here because GVIF was not mentioned in the textbook
+car::vif(model_lm) #the gvif are good, they are close to 1. There is no problematic collinearity. I used AI to understand the output here because GVIF was not mentioned in the textbook
 
 
 # Compare linear and smoothed relationships
